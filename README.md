@@ -1,7 +1,7 @@
 # Blockchain Manager
 This repository contains the source code to build and operate a Hyperledger Fabric blockchain in Ubuntu 18 and up. The manager uses a REST service to generate, interact and manage Hyperledger Fabric blockchains and its deployed smart contracts. The presented tool has the capability to also operate under ARM processors by utilizing most of the fabric containers developed by [chinyati](https://github.com/chinyati/Hyperledger-Fabric-ARM64-images).
 
-## Steps to Operate the Tool
+## Getting Started
 1. Download and install the programs below to run the fabric network.
     1. Git
     1. Docker & Docker Compose
@@ -32,7 +32,7 @@ This repository contains the source code to build and operate a Hyperledger Fabr
     1. Otherwise run `sudo chmod +x *` inside the desired architecture (i.e., arm or vanilla) to update permissions to desired binaries
 1. You are now ready to create your first blockchain.
 
-## NPM commands to run
+### NPM commands to run
 ```bash
 # To run REST Service
 npm run mongoUp        # Generates MongoDB container to store blockchain structure information
@@ -46,8 +46,11 @@ npm run caliperUp      # Generates a caliper instance
 # Remove all containers
 npm run clean
 ```
-## Use Postman Collection to interact with service
+### Use postman collection to interact with service
 * Register a blockchain (`Register Blockchain`)
 * Build registered blockchain (`Build Blockchain`)
 * Insert new sample transaction to ledger (`Insert Transaction`)
 * Query submitted transaction from ledger (`Evaluate Transaction`)
+
+## Disclaimer
+This tool is not intented to be deployed for production environments, instead it is tailored for research purposes to facilitate rapid blockchain prototyping and smart contract testing.
