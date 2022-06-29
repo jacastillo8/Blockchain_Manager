@@ -146,10 +146,7 @@ class Fabric:
         command += " --collections-config scripts/collections.json -c '{\"Args\":[\"init\"]}'"
         # NOTES - May need to change policies to query from other channel
         command += ' -P "OR(\'Org{}MSP.peer\')"'.format(org)
-        #command += ' -P "OR(\'Org1MSP.peer\',\'Org2MSP.peer\')"'
-        #print(command)
         result = cli.exec_run(command, environment=globals)
-        #print(result)
         if result[0] != 0:
             print('Error in Peer0 while instantiating contract "{}":\n{}'.format(contract_name[:-1], result[1]))
 
