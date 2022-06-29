@@ -301,7 +301,6 @@ export class Blockchain {
         args += ` --contracts ${contracts}`;
         console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
         let result = await shell(`${python} ${scriptPath} ${args}`);
-        console.log(result)
         if (result.code === 0) {
             console.log('[+] Hyperledger Caliper is Up');
         } else throw Error(`Caliper Instantiation Failed with Error: ${result.stderr}`);
