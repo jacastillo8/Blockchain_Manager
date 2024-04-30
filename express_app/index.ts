@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const cons = require('consolidate');
 
 // Deprecation Warnings removed
 mongoose.set('useNewUrlParser', true);
@@ -32,7 +33,10 @@ app.use(express.json({ limit: "50mb" }));
 
 // Setting EJS engine
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
+//app.set('view engine', 'ejs');
+app.engine('html', cons.swig)
+app.set('view engine', 'html');
 
 app.use(function (req: any, res: any, next: any) {
     //Enabling CORS
@@ -43,7 +47,12 @@ app.use(function (req: any, res: any, next: any) {
 });
 
 app.get('/', function(req: any, res: any) {
-    res.send({ msg: "Server Online" });
+    res.render('home');
+    //res.send({ msg: "Server Online" });
+});
+
+app.get('/blockchain/:bid', function(req: any, res: any) {
+    res.render('chain');
 });
 
 const api = require('./routes/api');

@@ -3,6 +3,7 @@ const multer = require('multer');
 const fs = require('fs');
 
 const Transaction = require('../models/transaction');
+const Chain = require('../models/chain');
 
 const { Blockchain } = require('../services/Blockchain');
 const { storeChainId, updateChainId, appendNewChainUser, 
@@ -80,6 +81,16 @@ function prepareEndpoint(req, res, next) {
 }
 
 // Routes
+router.get('/chains', async function(req, res) {
+    let chains = await Chain.find({});
+    if (chains.length > 0) {
+        chains = chains.map((item) => {
+            return {bid: item.id, owner: item.owner};
+        });
+    }
+    res.status(200).json(chains);
+});
+
 router.post('*', isBodyEmpty);
 router.all('/:bid*', checkChainId);
 
