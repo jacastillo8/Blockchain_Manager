@@ -35,8 +35,8 @@ app.use(express.json({ limit: "50mb" }));
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 //app.set('view engine', 'ejs');
-app.engine('html', cons.swig)
-app.set('view engine', 'html');
+//app.engine('html', cons.swig)
+app.set('view engine', 'ejs');
 
 app.use(function (req: any, res: any, next: any) {
     //Enabling CORS
@@ -46,18 +46,11 @@ app.use(function (req: any, res: any, next: any) {
     next();
 });
 
-app.get('/', function(req: any, res: any) {
-    res.render('home');
-    //res.send({ msg: "Server Online" });
-});
-
-app.get('/blockchain/:bid', function(req: any, res: any) {
-    res.render('chain');
-});
-
 const api = require('./routes/api');
+const front = require('./routes/front');
 const metrics = require('./routes/metrics');
 app.use('/api', api);
+app.use('/', front);
 app.use('/metrics', metrics);
 
 let port = process.env.PORT;

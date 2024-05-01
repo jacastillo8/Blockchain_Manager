@@ -55,30 +55,3 @@ footer {
     padding: 10px;
     text-align: center;
 }
-
-/* Blockchain-themed styles */
-.blockchain-section {
-    background-color: #fff;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.blockchain-title {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.blockchain-content {
-    font-size: 16px;
-}
-
-.blockchain-link {
-    color: #007bff;
-    text-decoration: none;
-}
-
-.blockchain-link:hover {
-    text-decoration: underline;
-}

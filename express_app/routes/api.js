@@ -60,7 +60,7 @@ function isBodyEmpty(req, res, next) {
 
 function prepareEndpoint(req, res, next) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let contract = bc.contract(req.params.cid);
     if (contract.length !== 0) {
         let users = bc.users();
@@ -81,13 +81,13 @@ function prepareEndpoint(req, res, next) {
 }
 
 // Routes
-router.get('/chains', async function(req, res) {
+router.get('/', async function(req, res) {
     let chains = await Chain.find({});
-    if (chains.length > 0) {
+    /*if (chains.length > 0) {
         chains = chains.map((item) => {
             return {bid: item.id, owner: item.owner};
         });
-    }
+    }*/
     res.status(200).json(chains);
 });
 
@@ -99,7 +99,7 @@ router.post('/', async function(req, res) {
     let bid = await generateChainId(body);
     if (bid !== null) {
         try {
-            let bc = new Blockchain(body.orderers, body.orgs, body.owner, body.channels, body.status, body.block, body.init_benchmark);
+            let bc = new Blockchain(body.orderers, body.orgs, body.owner, body.channels, body.status, body.block, body.benchmark);
             storeChainId(bc.info, bid);
             res.status(201).json({ bid });
         } catch (err) {
@@ -110,7 +110,7 @@ router.post('/', async function(req, res) {
 
 router.get('/:bid', async function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     res.json(bc.info);
 });
 
@@ -125,20 +125,20 @@ router.get('/:bid', async function(req, res) {
 
 router.get('/:bid/block', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     res.json(bc.info.block);
 });
 
 router.get('/:bid/channel', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     res.json(bc.info.channels);
 });
 
 router.post('/:bid/channel', async function(req, res) {
     let doc = res.locals.doc;
     let channel = req.body;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     // TODO - Instantiate channel with contracts
     appendNewChannel(channel, doc.id);
     res.status(201).json({});
@@ -148,7 +148,7 @@ router.get('/:bid/build', async function(req, res) {
     try {
         let doc = res.locals.doc;
         if (!doc.status) {
-            let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+            let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
             let info = await bc.build(setListeners=true);
             if (info.status) {
                 updateChainId(doc.id, bc.contracts);
@@ -164,9 +164,9 @@ router.get('/:bid/build', async function(req, res) {
 router.post('/:bid/benchmark', async function(req, res) {
     try {
         let doc = res.locals.doc;
-        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
         if (!bc.info.status) throw Error('Resource not initialized');
-        if (!bc.info.init_benchmark) {
+        if (!bc.info.benchmark) {
             let info = bc.info;
             info.id = doc.id;
             await bc.buildCaliper(req.body.channel);
@@ -182,7 +182,7 @@ router.post('/:bid/benchmark', async function(req, res) {
 
 router.get('/:bid/config/:orgName', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let enrolledOrgs = bc.info.orgs;
     for (let i=0; i<enrolledOrgs.length; i++) {
         let org = enrolledOrgs[i];
@@ -196,7 +196,7 @@ router.get('/:bid/config/:orgName', function(req, res) {
 
 router.get('/:bid/wallet/:userName/:orgName', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let enrolledOrgs = bc.info.orgs;
     for (let i=0; i<enrolledOrgs.length; i++) {
         let org = enrolledOrgs[i];
@@ -214,23 +214,29 @@ router.get('/:bid/wallet/:userName/:orgName', function(req, res) {
     res.status(400).json({ message: 'User does not exists under given organization'})
 });
 
+router.get('/:bid/organizations', function(req, res) {
+    let doc = res.locals.doc;
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    res.json(bc.info.orgs);
+});
+
 router.get('/:bid/users', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
-    res.json({ users: bc.users()});
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    res.json(bc.users());
 });
 
 router.get('/:bid/users/:orgName', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
-    res.json({ users: bc.users(req.params.orgName)});
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    res.json(bc.users(req.params.orgName));
 });
 
 router.post('/:bid/users', async function(req, res) {
     let doc = res.locals.doc;
     let body = req.body;
     if (doc.status) {
-        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
         let index = translateUserOrg(doc, body);
         if (index > -1) {
             try {
@@ -248,15 +254,15 @@ router.post('/:bid/users', async function(req, res) {
 
 router.get('/:bid/contracts', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
-    res.json({ contracts: bc.contracts });
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    res.json(bc.contracts);
 });
 
 router.post('/:bid/contracts', async function(req, res) {
     let doc = res.locals.doc;
     let body = req.body;
     if (doc.status) {
-        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+        let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
         try {
             let cid = await bc.installContract(body.channel, body.name, body.version);
             body.id = cid;
@@ -268,11 +274,11 @@ router.post('/:bid/contracts', async function(req, res) {
     } else res.status(400).json({ message: 'Resource not initialized' });   
 });
 
-router.get('/:bid/contracts/:cid', function(req, res) {
+/*router.get('/:bid/contracts/:cid', function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
-    res.json({ contract: bc.contract(req.params.cid) })
-});
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    res.json(bc.contract(req.params.cid))
+});*/
 
 /*router.delete('/:bid/contracts/:cid', async function(req, res) {
     let doc = res.locals.doc;
@@ -285,7 +291,7 @@ router.get('/:bid/contracts/:cid', function(req, res) {
 // remove async
 router.post('/:bid/:cid/document/insert', upload.single('document'), prepareEndpoint, function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let endpoint = res.locals.endpoint;
     req.body.message = JSON.parse(req.body.message);
 
@@ -343,7 +349,7 @@ router.post('/:bid/:cid/document/insert', upload.single('document'), prepareEndp
 
 router.post('/:bid/:cid/document/evaluate', prepareEndpoint, async function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let endpoint = res.locals.endpoint;
 
     let message = {
@@ -384,7 +390,7 @@ router.post('/:bid/:cid/document/evaluate', prepareEndpoint, async function(req,
 
 router.post('/:bid/:cid/insert', prepareEndpoint, async function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let endpoint = res.locals.endpoint;
 
     let message = {
@@ -421,7 +427,7 @@ router.post('/:bid/:cid/insert', prepareEndpoint, async function(req, res) {
 
 router.post('/:bid/:cid/evaluate', prepareEndpoint, async function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.init_benchmark);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let endpoint = res.locals.endpoint;
     let message = {
         method: req.body.message.method,

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCM</title>
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
+    <style>
+        /* Centering styles */
+        .content-container {
+            text-align: center;
+            margin: 0 auto; /* Center horizontally */
+            max-width: 1000px; /* Limit content width */
+            padding: 0 20px; /* Add some padding */
+        }
+        header {
+            text-align: center; /* Center the text within the header */
+        }
+        #bcform {
+            text-align: left;
+        }
+        .btn {
+            padding: 5px 10px;
+            background-color: #0f41e4ad;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- Your header content goes here -->
+        <h1>Blockchain Manager</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/new">New Blockchain</a></li>
+                <!--<li><a href="/services">Services</a></li>
+                <li><a href="/contact">Contact</a></li> -->
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content-container">
+        <main>
+            <!-- Your main content goes here -->
+            <h2>Blockchain Form</h2>
+            <form id="bcform">
+                <label for="owner">Owner:</label><br>
+                <input type="text" id="owner" name="owner"><br>
+                <label for="orderers">Orderers:</label><br>
+                <input type="number" id="orderers" name="orderers" min="1" max="5"><br>
+                <label for="block_time">Block Timeout (s):</label><br>
+                <input type="number" id="block_time" name="block_time" min="1"><br>
+            </form>
+            <button class="btn" id="submitBtn">Create</button>
+        </main>
+    </div>
+
+    <script>
+        const btn = document.getElementById('submitBtn');
+        const form = document.forms[0].querySelectorAll('input');
+        const values = Array.from(form).map(f => {
+            if (f.name === 'block_time') return f.value + 's';
+            else return f.value;
+        });
+        btn.addEventListener('click', () => {
+            // reset form
+            // collect all input fields of form
+            values.forEach(c => {
+                console.log(c)
+            })
+        })
+        
+    </script>
+
+    <footer>
+        <!-- Your footer content goes here -->
+        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
+    </footer>
+</body>
+</html>

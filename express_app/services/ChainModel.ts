@@ -31,7 +31,7 @@ export function updateChainId(bid: string, contracts: Contract[]) {
 export function updateChainBenchmark(bid: string) {
     Chain.findOne({ id: bid }, function(err: any, doc: any) {
         if (doc !== null) {
-            doc.init_benchmark = !doc.init_benchmark;
+            doc.benchmark = !doc.benchmark;
             doc.save();
         }
     })
@@ -95,7 +95,7 @@ export async function searchChainId(bid: string) {
             //contracts: document.contracts,
             block: document.block,
             status: document.status,
-            init_benchmark: document.init_benchmark,
+            benchmark: document.benchmark,
             id: document.id
         };
     } else doc = '';

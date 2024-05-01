@@ -72,10 +72,10 @@ export class Blockchain {
     private _channels: Channel[];
     private _users: Client[];
     private _built: boolean;
-    private _init_benchmark: boolean;
+    private _benchmark: boolean;
     private _contracts: Contract[];
 
-    constructor(orderers: number, orgs: Object[], owner: string, channels: Channel[], status: boolean, block: BlockStructure, init_benchmark: boolean) {
+    constructor(orderers: number, orgs: Object[], owner: string, channels: Channel[], status: boolean, block: BlockStructure, benchmark: boolean) {
         this._owner = owner;
         this._block = block;
         this._orderers = orderers;
@@ -86,7 +86,7 @@ export class Blockchain {
         //this._peers = extractPeers(this._organizations);
         this._users = extractUsers(this._organizations);
         this._built = status || false;
-        this._init_benchmark = init_benchmark || false; 
+        this._benchmark = benchmark || false; 
         this._contracts = extractContracts(this._channels);
     }
 
@@ -99,7 +99,7 @@ export class Blockchain {
             orgs: this._organizations,
             channels: this._channels,
             status: this._built,
-            init_benchmark: this._init_benchmark
+            benchmark: this._benchmark
         }
     }
 

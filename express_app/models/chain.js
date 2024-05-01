@@ -20,7 +20,7 @@ let chainSchema = mongoose.Schema({
         type: Boolean,
         required: true
     },
-    init_benchmark: {
+    benchmark: {
         type: Boolean,
         required: true
     },

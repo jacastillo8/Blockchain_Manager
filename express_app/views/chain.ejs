@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCM: Blockchain</title>
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
+    <style>
+        .content-container {
+            text-align: center;
+            margin: 0 auto; /* Center horizontally */
+            max-width: 1000px; /* Limit content width */
+            padding: 0 20px; /* Add some padding */
+        }
+        header {
+            text-align: center; /* Center the text within the header */
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px auto; /* Center the table */
+        }
+        tr:hover {
+            background-color: #f2f2f2; /* Highlight the row on hover */
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .btn {
+            padding: 5px 10px;
+            background-color: #003603ad;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:disabled {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <!-- Your header content goes here -->
+        <h1>Blockchain Manager</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/new">New Blockchain</a></li>
+                <!--<li><a href="/services">Services</a></li>
+                <li><a href="/contact">Contact</a></li> -->
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content-container">
+        <main>
+            <!-- Your main content goes here -->
+            <h2>Blockchain ID: <%= bid%></h2>
+            <table id="dataTable"></table>
+        </main>
+    </div>
+
+    <!-- Your JavaScript scripts or external links go here -->
+    <script>
+        const id = <%- JSON.stringify(bid) %>;
+        async function fetchDataAndRender(bid) {
+            try {
+                // Fetch JSON data from the server
+                const response = await fetch(`/api/${bid}`);
+                let data = await response.json();
+
+                var table = document.getElementById("dataTable");
+                table.innerHTML = '';
+
+                // Create table header
+                const keys = Object.keys(data).filter(k => {
+                    if (!(k.includes('_') || k.includes('id'))) return k;
+                });
+
+                const headerRow = table.insertRow();
+                const dataRow = table.insertRow();
+                keys.forEach(k => {
+                    const headerCell = document.createElement("th");
+                    const headerText = document.createTextNode(k.toUpperCase());
+                    headerCell.appendChild(headerText);
+                    headerRow.appendChild(headerCell);
+                    
+                    let value = data[k]
+                    if (Array.isArray(value)) value = value.length;
+                    else if (value instanceof Object) value = `every ${value.timeout}`
+                    const dataCell = document.createElement("td");
+                    if (k === 'status') dataCell.id = 'status';
+                    else if (k === 'benchmark') dataCell.id = 'benchmark';
+                    const dataText = document.createTextNode(value);
+                    dataCell.appendChild(dataText);
+                    dataRow.appendChild(dataCell);
+                });
+
+                if (Object.keys(data).length !== 0) {
+                    // Create a button next to each row
+                    const buttonBC = document.createElement("td");
+                    const buttonA = document.createElement("button");
+                    buttonA.innerHTML = "Build Blockchain";
+                    buttonA.className = "btn";
+                    buttonBC.appendChild(buttonA);
+                    dataRow.appendChild(buttonBC);
+
+                    const buttonBen = document.createElement("td");
+                    const buttonB = document.createElement("button");
+                    buttonB.innerHTML = "Build Benchmark";
+                    buttonB.className = "btn";
+                    buttonBen.appendChild(buttonB);
+                    dataRow.appendChild(buttonBen);
+
+                    const statusCell = document.getElementById('status');
+                    const benchmarkCell = document.getElementById('benchmark');
+                    if (statusCell.innerText === 'true') buttonA.disabled = true;
+                    if (benchmarkCell.innerText === 'true') buttonB.disabled = true;
+                    // TODO - Remove ButtonB disabled once benchmark works
+                    buttonB.disabled = true;
+
+                    // Add click event listener to the button
+                    buttonA.addEventListener('click', async () => {
+                        // Handle button click event here
+                        buttonA.disabled = true;
+                        const response = await fetch(`/api/${bid}/build`);
+                        const result = await response.json();
+                        statusCell.innerText = true;
+                    });
+                    /*buttonB.addEventListener('click', async () => {
+                        // Handle button click event here
+                        buttonB.disabled = true;
+                        const response = await fetch(`/api/${bid}/benchmark`, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ channel: })
+                        });
+                        const result = await response.json();
+                        // logic here
+                        benchmarkCell.innerText = true;
+                    });*/
+
+                    const dataCols = table.querySelectorAll('td'); 
+                    dataCols.forEach((col, i) => {
+                        col.addEventListener('click', () => {
+                            // Handle columns click event here
+                            if (i === 5) window.location.href = `/channel?bid=${bid}`;
+                            else if (i === 4) window.location.href = `/organizations?bid=${bid}`;
+                            else if (i === 3) window.location.href = `/block?bid=${bid}`;
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        fetchDataAndRender(id);
+    </script>
+
+    <footer>
+        <!-- Your footer content goes here -->
+        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
