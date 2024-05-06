@@ -29,6 +29,10 @@ router.get('/users', function(req, res) {
     res.render('users', { bid: req.query.bid, oname: req.query.oname });
 });
 
+router.get('/newuser', function(req, res) {
+    res.render('newuser');
+});
+
 router.get('/new', function(req, res) {
     res.render('newchain');
 });

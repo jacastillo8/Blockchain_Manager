@@ -37,6 +37,15 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        input[type="submit"] {
+            width: 100%; /* Full width of the grid */
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: #0f41e4ad;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -58,7 +67,11 @@
         <main>
             <!-- Your main content goes here -->
             <h2>Users for Organization: <%= oname%> <br>BID: <%= bid%></h2>
+            <br>
             <table id="dataTable"></table>
+            <div>
+                <input type="submit" value="New User" id="btn_user">
+            </div>
         </main>
     </div>
 
@@ -130,6 +143,10 @@
             }
         }
         fetchDataAndRender(id, oname);
+        const btn = document.getElementById('btn_user');
+        btn.addEventListener('click', () => {
+            window.location.href = '/newuser';
+        })
     </script>
 
     <footer>
