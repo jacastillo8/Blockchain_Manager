@@ -145,7 +145,7 @@
         fetchDataAndRender(id, oname);
         const btn = document.getElementById('btn_user');
         btn.addEventListener('click', () => {
-            window.location.href = '/newuser';
+            window.location.href = `/newuser?bid=${id}&oname=${oname}`;
         })
     </script>
 

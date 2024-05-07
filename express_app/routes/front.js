@@ -30,7 +30,7 @@ router.get('/users', function(req, res) {
 });
 
 router.get('/newuser', function(req, res) {
-    res.render('newuser');
+    res.render('newuser', { bid: req.query.bid, oname: req.query.oname });
 });
 
 router.get('/new', function(req, res) {

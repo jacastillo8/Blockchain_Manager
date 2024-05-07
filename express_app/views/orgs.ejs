@@ -37,6 +37,9 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        .btn:disabled {
+            background-color: #666;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +61,7 @@
         <main>
             <!-- Your main content goes here -->
             <h2>Organizations for BID: <%= bid%></h2>
+            <br>
             <table id="dataTable"></table>
         </main>
     </div>
@@ -103,11 +107,12 @@
                     }
                     const values = Object.values(item);
                     const dataRow = table.insertRow();
+                    console.log(values)
                     values.forEach(v => {
                         const dataCell = document.createElement("td");
                         if (Array.isArray(v)) {
-                            if (typeof(v[0]) === 'object') v = v.length;
-                            else v = v.join(', ');
+                            v = v.length;
+                            dataCell.id = 'usrs'
                         }
                         const dataText = document.createTextNode(v);
                         dataCell.appendChild(dataText);
@@ -117,6 +122,8 @@
                     const btn = document.createElement("button");
                     btn.innerHTML = "Download CCP";
                     btn.className = "btn";
+                    const usrs = document.getElementById('usrs');
+                    //if (usrs.childNodes[0].data === '0') btn.disabled = true;
                     buttonDown.appendChild(btn);
                     dataRow.appendChild(buttonDown);
 

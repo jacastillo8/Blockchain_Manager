@@ -50,6 +50,7 @@
         <main>
             <!-- Your main content goes here -->
             <h2>Channels for BID: <%= bid%></h2>
+            <br>
             <table id="dataTable"></table>
         </main>
     </div>
@@ -80,12 +81,12 @@
                     }
                     const values = Object.values(item);
                     const dataRow = table.insertRow();
-                    values.forEach(v => {
+                    console.log(values)
+                    values.forEach((v, i) => {
                         const dataCell = document.createElement("td");
-                        if (Array.isArray(v)) {
-                            if (typeof(v[0]) === 'object') v = v.length;
-                            else v = v.join(', ');
-                        }
+                        if (Array.isArray(v) && (typeof v[0] === 'string')) v = v.join(', ');
+                        else if (Array.isArray(v) && (typeof v[0] === 'object')) v = v.length;
+                        else if (Array.isArray(v)) v = v.length;
                         const dataText = document.createTextNode(v);
                         dataCell.appendChild(dataText);
                         dataRow.appendChild(dataCell);

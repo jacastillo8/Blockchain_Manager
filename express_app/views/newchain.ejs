@@ -72,7 +72,7 @@
                 <input type="text" id="owner" name="owner">
 
                 <label for="orderers">Number of Orderers:</label>
-                <input type="number" id="orderers" name="orderers" min="1" max="5" value="1">
+                <input type="number" id="orderers" name="orderers" min="1" max="1" value="1">
 
                 <label for="orgs">Number of Organizations:</label>
                 <input type="number" id="orgs" name="orgs" min="1" value="1">
@@ -82,21 +82,21 @@
             </form>
             <h3>Block Structure</h3>
             <form id="block" class="form-grid">
-                <label for="block_time">Block Timeout (s):</label>
-                <input type="number" id="block_time" name="block_time" min="1" value="1">
+                <label for="timeout">Block Timeout (s):</label>
+                <input type="number" id="timeout" name="timeout" min="1" value="1">
 
-                <label for="max_mgs">Block Max Messages:</label>
-                <input type="number" id="max_mgs" name="max_mgs" min="1" value="10">
+                <label for="max_messages">Block Max Messages:</label>
+                <input type="number" id="max_messages" name="max_messages" min="1" value="10">
 
                 <label for="max_bytes">Block Max Bytes (MB):</label>
-                <input type="number" id="max_bytes" name="max_bytes" min="1" max="100" value="1">
+                <input type="number" id="max_bytes" name="max_bytes" min="1" max="100" value="1" style="grid-column: span 3;">
             </form>
             <h3>Organization Information</h3>
-            <form id="org_info">
+            <form id="org_info" class="form-grid">
 
             </form>
             <h3>Channel Information</h3>
-            <form id="channel_info">
+            <form id="channel_info" class="form-grid">
 
             </form>
             <br>
@@ -108,25 +108,195 @@
     </div>
 
     <script>
-        
-        // TODO - populate forms for orgs and channels before getting inputs
-        // TODO - iterate over all forms to get inputs
-        const form = document.forms[0].querySelectorAll('input');
-        const values = Array.from(form).map(f => {
-            if (f.name === 'block_time') return f.value + 's';
-            else if (f.name === 'max_bytes') return f.value + 'MB';
-            else return f.value;
+        function checkForDuplicates(array) {
+            return new Set(array).size !== array.length;
+        }
+        function resetForms() {
+            Array.from(document.forms).forEach( f => {
+                f.reset();
+            });
+        }
+        function cleanDiv(div) {
+            const elements = div.querySelectorAll('input');
+            elements.forEach( e => {
+                div.removeChild(e);
+            });
+        }
+        function cleanForm(form) {
+            const divs = form.querySelectorAll('div');
+            divs.forEach( e => {
+                cleanDiv(e);
+                form.removeChild(e);
+            });
+
+            const inputs = form.querySelectorAll('input');
+            const labels = form.querySelectorAll('label');
+            
+            inputs.forEach( e => {
+                form.removeChild(e);
+            });
+            labels.forEach( e => {
+                form.removeChild(e);
+            });
+        }
+        function populateOrgs(orgNumber) {
+            const form = document.getElementById('org_info');
+            cleanForm(form);
+            for (let i=0; i<orgNumber; i++) {
+                const label = document.createElement('label');
+                label.htmlFor = 'name' + i;
+                label.name = 'name' + i;
+                label.innerText = `Organization ${i+1} Name:`;
+
+                const input = document.createElement('input');
+                input.id = 'name' + i;
+                input.name = 'name' + i;
+                input.type = 'text';
+                input.style = 'grid-column: span 3;';
+
+                form.appendChild(label);
+                form.appendChild(input);
+            }
+        }
+        function populateChannels(channelNumber, orgNumber) {
+            const form = document.getElementById('channel_info');
+            cleanForm(form);
+            for (let i=0; i<channelNumber; i++) {
+                const label = document.createElement('label');
+                label.htmlFor = 'name' + i;
+                label.name = 'name' + i;
+                label.innerText = `Channel ${i+1} Name:`;
+
+                const input = document.createElement('input');
+                input.id = 'name' + i;
+                input.name = 'name' + i;
+                input.type = 'text';
+                input.style = 'grid-column: span 3;';
+
+                const label1 = document.createElement('label');
+                label1.htmlFor = 'name' + i;
+                label1.name = 'name' + i;
+                label1.innerText = 'Organizations:';
+
+                const div = document.createElement('div');
+                div.style = 'grid-column: span 3;';
+
+                for (let j=0; j<orgNumber; j++) {
+                    const label = document.createElement('label');
+                    label.htmlFor = 'org' + j;
+                    label.name = 'org' + j;
+                    label.innerText = `Org ${j+1}  `;
+                    const check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.id = 'org' + j;
+                    check.name = 'org' + j;
+                    div.appendChild(check);
+                    div.appendChild(label);
+                }
+                
+                form.appendChild(label);
+                form.appendChild(input);
+                form.appendChild(label1);
+                form.appendChild(div);
+            }
+        }
+
+        resetForms();
+        const inputOrgs = document.getElementById('orgs');
+        const inputChannels = document.getElementById('channels');
+        inputOrgs.addEventListener('input',  (event) => {
+            populateOrgs(event.target.value);
+            populateChannels(inputChannels.value, event.target.value);
         });
+        inputChannels.addEventListener('input', (event) => {
+            populateChannels(event.target.value, inputOrgs.value);
+        });
+        populateOrgs(inputOrgs.value);
+        populateChannels(inputChannels.value, inputOrgs.value);
 
         const btn = document.getElementById('btn');
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
+            const forms = Array.from(document.forms).slice(2);
+            const doc = {};
+            doc['owner'] = document.getElementById('owner').value;
+            if (doc['owner'] === '') {
+                alert('Owner field should not be empty');
+                return; 
+            }
+            doc['orderers'] = parseInt(document.getElementById('orderers').value);
+            doc['block'] = {
+                'timeout': document.getElementById('timeout').value + 's',
+                'batch_size': {
+                    'max_messages': document.getElementById('max_messages').value,
+                    'max_bytes': document.getElementById('max_bytes').value + 'MB'
+                }
+            };
+            doc['orgs'] = [];
+            doc['channels'] = [];
+
+            for (let i=0; i<forms.length; i++) {
+                const form = forms[i];
+                if (i === 0) {
+                    const inputs = Array.from(form.querySelectorAll('input'))
+                    const array = [];
+                    for (let e of inputs) {
+                        if (e.value === '') {
+                            alert('Organization names should not be empty');
+                            return;
+                        }
+                        array.push(e.value);
+                        const temp = {
+                            'name': e.value,
+                            'users': []
+                        };
+                        doc['orgs'].push(temp);
+                    }
+                    const isDuplicates = checkForDuplicates(array);
+                    if (isDuplicates) {
+                        alert('Organizations names are repeated');
+                        return;
+                    }
+                } else if (i === 1) {
+                    const children = Array.from(form.children).filter((e,j) => j % 2 !== 0);
+                    const names = children.filter((e,j) => j % 2 === 0);
+                    const divs = children.filter((e,j) => j % 2 === 1);
+
+                    for (let j=0; j<names.length; j++) {
+                        const temp = {};
+                        temp['name'] = '';
+                        temp['orgs'] = [];
+                        temp['contracts'] = [];
+
+                        temp['name'] = names[j].value;
+                        if (temp['name'] === '') {
+                            alert('Channel name should not be empty');
+                            return;
+                        }
+                        const items = Array.from(divs[j].children).filter((e,k) => k % 2 === 0);
+                        for (let e of items) {
+                            if (e.checked) temp['orgs'].push(doc['orgs'][e.name.match(/(\d+)/)[0]].name);
+                        }
+                        if (temp['orgs'].length === 0) {
+                            alert('You need select at least one organization per channel');
+                            return;
+                        }
+                        doc['channels'].push(temp);
+                    }
+                }
+            }
+            const response = await fetch('/api', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(doc)
+            });
+            let data = await response.json();
+            window.location.href = '/'
             // reset form
-            // collect all input fields of form
-            values.forEach(c => {
-                console.log(c)
-            })
-        })
-        
+            resetForms();
+        });
     </script>
 
     <footer>

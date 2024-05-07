@@ -71,10 +71,10 @@
                 <input type="text" id="name" name="name">
 
                 <label for="org">Organization:</label>
-                <input type="text" id="org" name="org">
+                <input type="text" id="org" name="org" value=<%=oname%> disabled="disabled>
 
-                <label for="dept">Department:</label>
-                <input type="text" id="dept" name="dept">
+                <label for="department">Department:</label>
+                <input type="text" id="department" name="department" style="grid-column: span 3;">
             </form>
             <br>
             <div class="full-width">
@@ -85,7 +85,42 @@
     </div>
 
     <script>
-       
+        function resetForms() {
+            Array.from(document.forms).forEach( f => {
+                f.reset();
+            });
+        }
+        const id = <%- JSON.stringify(bid) %>;
+        const oname = <%- JSON.stringify(oname) %>;
+        const btn = document.getElementById('btn');
+        const form = document.getElementById('usr');
+        btn.addEventListener('click', async () => {
+            const inputs = Array.from(form.querySelectorAll('input'));//Array.from(form.children).filter((e,j) => j % 2 !== 0);
+            const user = {};
+            for (let i=0; i<inputs.length; i++) {
+                if (inputs[i].value === '') {
+                    alert(`Field "${inputs[i].name}" should not be empty`);
+                    return;
+                }
+                user[inputs[i].name] = inputs[i].value;
+            }
+            const response = await fetch(`/api/${id}/users`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(user)
+            });
+            let data = await response.json();
+            if (data.message !== undefined) {
+                alert(data.message);
+                return;
+            }
+            window.location.href = `/users/?bid=${id}&oname=${oname}`;
+            // reset form
+            //resetForms();
+        })
     </script>
 
     <footer>
