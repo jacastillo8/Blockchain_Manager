@@ -5,7 +5,7 @@ networks:
     app:
 services:
     mongo:
-        image: mongo
+        image: mongo:4.0
         container_name: mongo
         restart: always
         ports:

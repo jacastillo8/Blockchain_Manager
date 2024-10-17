@@ -37,13 +37,13 @@ export function updateChainBenchmark(bid: string) {
     })
 }
 
-/*function removeChainId(bid) {
-    Chain.findOne({ id: bid }, function(err, doc) {
+export function removeChainId(bid: string) {
+    Chain.findOne({ id: bid }, function(err: any, doc: any) {
         if (doc !== null) {
             doc.remove();
         }
     });
-}*/
+}
 
 export function appendNewChainUser(client: Client, bid: string) {
     let filter = { 'id': bid, 'orgs.id': client.org };
@@ -109,12 +109,3 @@ export async function generateChainId(obj: any) {
     if (!doc) return id;
     return null;
 }
-
-/*module.exports.storeChainId = storeChainId;
-module.exports.updateChainId = updateChainId;
-module.exports.updateChainBenchmark = updateChainBenchmark;
-module.exports.appendNewChainUser = appendNewChainUser;
-module.exports.appendNewChainContract = appendNewChainContract;
-module.exports.appendNewChannel = appendNewChannel;
-module.exports.generateChainId = generateChainId;
-module.exports.searchChainId = searchChainId;*/

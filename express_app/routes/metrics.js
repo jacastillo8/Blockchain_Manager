@@ -37,6 +37,7 @@ async function checkContractId(req, res, next) {
 router.all('/:bid*', checkChainId);
 router.all('/:bid/:cid*', checkContractId);
 
+// TODO - Add methods to measure transaction delays
 router.get('/:bid/:cid/:method', async function(req, res) {
     let bid = req.params.bid;
     let cid = req.params.cid;

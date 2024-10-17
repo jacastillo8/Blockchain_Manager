@@ -1,21 +1,16 @@
 #!/bin/bash
 
-function removeWallets() {
+function removeChains() {
     echo
     echo "##########################################################"
-    echo "################### Removing Wallets #####################"
+    echo "################### Removing All Chains #####################"
     echo "##########################################################"
-    rm -r ./wallets/*
+    rm -rf ../blockchain_base/chains/bc_*
 }
 
 # Destroy Blockchain and containers
 function clean() {
-    removeWallets
-    echo "----- Removing all files, containers, volumes and networks -----"
-    cd ../blockchain_base
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config
-    cd ../express_app
-    #docker volume prune
+    removeChains
     clearContainers
     docker network rm $(docker network ls -qf name=net) # net is defined in every .env file as project name for simplicity
     removeUnwantedImages

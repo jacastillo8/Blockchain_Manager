@@ -42,7 +42,7 @@ if __name__ == '__main__':
                         help='Database credentials (Ex: --credentials user password).')
     parser.add_argument('--arm64', dest='arch', default='false', type=str, help='Processor Architecture.')
     parser.add_argument('--block', dest='block', nargs='+', help='Underlying block structure.')
-    #parser.add_argument('--folder', dest='path', default='', type=str, help='Folder where it will be stored')
+    parser.add_argument('--folder', dest='path', default='', type=str, help='Folder where it will be stored')
     
     if len(sys.argv) == 1:
         parser.print_help()
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     if args.arch == 'true':
         arch = True
     # Generate Files
-    ComposeFabric(subpath='',
+    ComposeFabric(subpath=args.path,
                 number_organizations=args.orgs,
                 number_peers=peers,
                 org_users=users,

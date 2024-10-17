@@ -22,6 +22,7 @@ parser.add_argument('-d', '--domain', dest='domain', type=str, help='Domain name
 parser.add_argument('-n', '--name', dest='name', type=str, help='Contract Name')
 parser.add_argument('-v', '--version', dest='version', type=str, help='ChainCode Version')
 parser.add_argument('-o', dest='org', default=None, type=str, help='Contract Organization')
+parser.add_argument('--folder', dest='path', default='', type=str, help='Folder where it will be stored')
 
 if len(sys.argv) == 1:
     parser.print_help()
@@ -37,7 +38,7 @@ else:
     peers = tuple(int(p) for p in args.peers)
 
 # TODO - Check number_organizations
-fabric = ComposeFabric(subpath='',
+fabric = ComposeFabric(subpath=args.path,
                         number_organizations=args.orgs,
                         number_peers=peers,
                         org_users=1,

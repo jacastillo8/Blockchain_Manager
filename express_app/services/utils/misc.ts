@@ -1,25 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 const hash = require('object-hash');
-//const { Wallets, Wallet, Contract, Gateway } = require('fabric-network');
 const { exec } = require('child_process');
 
 import { Wallets, Gateway, DefaultEventHandlerStrategies, DefaultQueryHandlerStrategies } from "fabric-network";
 import { Client, Organization } from "./factories";
 import { Endpoint } from "./interfaces";
 
-// Interfaces
-//import { Endpoint } from "../../interfaces/endpoint";
-//import { FabricConfigurationProfile } from "./interfaces";
-
-export function getCCP(organizationName: string) {
-    const ccpPath = path.join(__dirname, '..', '..', '..', 'blockchain_base', `connection-${organizationName}.json`);
+export function getCCP(organizationName: string, owner: string) {
+    const ccpPath = path.join(__dirname, '..', '..', '..', 'blockchain_base', 'chains', `bc_${owner}`, `connection-${organizationName}.json`);
     const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
     return JSON.parse(ccpJSON);
 }
 
-export function getWallet(organizationName: string) {
-    const walletPath = path.join(__dirname, '..', '..', 'wallets', `wallet_${organizationName}`);
+export function getWallet(organizationName: string, owner: string) {
+    const walletPath = path.join(__dirname, '..', '..', '..', 'blockchain_base', 'chains', `bc_${owner}`, 'wallets', `wallet_${organizationName}`);
     return Wallets.newFileSystemWallet(walletPath);
 }
 
@@ -27,9 +22,9 @@ export function getMSP(organizationName: string): string {
     return organizationName.charAt(0).toUpperCase() + organizationName.slice(1) + 'MSP';
 }
 
-export async function prepareEndpoint(endpoint: Endpoint) {
-    const ccp = await getCCP(endpoint.affiliation);
-    const wallet = await getWallet(endpoint.affiliation);
+export async function prepareEndpoint(endpoint: Endpoint, owner: string) {
+    const ccp = await getCCP(endpoint.affiliation, owner);
+    const wallet = await getWallet(endpoint.affiliation, owner);
     const gateway = new Gateway();
     await gateway.connect(ccp, { wallet, identity: endpoint.requestor, discovery: { enabled: true, asLocalhost: true }, 
                                 eventHandlerOptions: { endorseTimeout: 300, commitTimeout: 300, strategy: DefaultEventHandlerStrategies.MSPID_SCOPE_ALLFORTX },
@@ -59,6 +54,18 @@ export function isUsernameExists(client: Client, users: Client[]) {
     // getCommitters() - check array length for number of ords
     return network.getChannel().getCommitters();
 }*/
+
+export function removeBCFiles(owner: string) {
+    const filesPath = path.join(__dirname, '..', '..', '..', 'blockchain_base', 'chains', `bc_${owner}`)
+    try {
+        fs.rmSync(filesPath, { recursive: true, force: true });
+        console.log(`[-] Directory "bc_${owner}" removed.`)
+        return true;
+    } catch (err) {
+        console.log(err);
+        return false;
+    }
+}
 
 export function shell(cmd: string) {
     if (typeof cmd !== 'string') return Promise.reject('Command is not string');
@@ -117,16 +124,3 @@ export function isDuplicate(arr: Organization[]){
 export function wait(delay=500) {
     return new Promise(resolve => setTimeout(resolve, delay));
 }
-
-/*module.exports.shell = shell;
-module.exports.containsObject = containsObject;
-module.exports.isArray = isArray;
-module.exports.isDuplicate = isDuplicate;
-module.exports.isUsernameExists = isUsernameExists;
-module.exports.wait = wait;
-module.exports.getCCP = getCCP;
-module.exports.getWallet = getWallet;
-module.exports.getMSP = getMSP;
-module.exports.prepareEndpoint = prepareEndpoint;*/
-// Testing
-//module.exports.getChannel = getChannel;

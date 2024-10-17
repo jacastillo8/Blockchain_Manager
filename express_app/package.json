@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node index.ts",
-    "chainUp": "python3 scripts/build_fabric.py -O 2 -p 1 -u 1 -o 0 -d testcompany -n testchain -C TestChannel -c 1,2 --block 1s 10 2MB",
+    "chainUp": "python3 scripts/build_fabric.py -O 2 -p 1 -u 1 -o 0 -d testcompany -n testchain -C TestChannel -c 1,2 --block 1s 10 2MB --folder bc_test",
     "mongoUp": "bash scripts/mongo.sh up",
     "mongoDown": "bash scripts/mongo.sh down",
     "caliperUp": "python3 scripts/build_caliper.py -O 2 -p 1 -C TestChannel 1 -c 1,2 -o 1 -d testcompany --contracts test_contract,1.0",
-    "contractUp": "python3 scripts/uploadCC.py -O 2 -p 1 -C TestChannel -c 1,2 -d testcompany -n test_contract1 -v 1.0",
+    "contractUp": "python3 scripts/uploadCC.py -O 2 -p 1 -C TestChannel -c 1,2 -d testcompany -n test_contract1 -v 1.0 --folder bc_test",
     "clean": "bash scripts/clean.sh",
     "updateCCP": "node scripts/updateConfig.js",
     "rmcc": "bash scripts/removeCC.sh"

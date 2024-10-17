@@ -69,7 +69,12 @@ class ComposeFabric(object):
             org_users = tuple(org_users for i in range(number_organizations))
         if not isinstance(db_creds, list) or len(db_creds) > 2 or len(db_creds) == 1:
             raise Exception("Argument must be a list of length 2")
-        self.path = path + '../blockchain_base/' + subpath
+        self.path = path + '../blockchain_base/'
+        self.subpath = self.path + 'chains/' + subpath + '/'
+        if not os.path.exists(self.subpath):
+            os.mkdir(self.subpath)
+        if not os.path.exists(self.subpath + "base"):
+            os.mkdir(self.subpath + "base")
         # TODO - Enable definition of peers in Organization object (Node)
         self.numPeers = number_peers
         self.numOrgs = number_organizations
@@ -85,17 +90,28 @@ class ComposeFabric(object):
         self.ports = {}
         self.arm64 = arm64
         self.block = { 'timeout': block_form[0], 'batch_size': { 'max_messages': block_form[1], 'max_bytes': block_form[2] }}
-        self.fabric = Fabric(self.path, self.arm64)
-        print(self.consortiums)
+        self.fabric = Fabric(self.path, 'chains/' + subpath, self.arm64)
 
     def set_orderers(self, number_orderers):
         self.numOrds = number_orderers
         
     def create_env(self):
-        with open('{}.env'.format(self.path), 'w+') as file:
+        with open('{}.env'.format(self.subpath), 'w+') as file:
             text = 'COMPOSE_PROJECT_NAME={}\nIMAGE_TAG=latest\nSYS_CHANNEL=net-sys-channel'.format(self.project_name)
             file.write(text)
     
+    
+    def create_ca_bash(self):
+        text = '#!/bin/bash\n'
+        for org in range(self.numOrgs):
+            text += 'export NET_CA{0}_PRIVATE_KEY=$(cd crypto-config/peerOrganizations/org{0}.{1}/ca && ls *_sk)\n'.format(org + 1, self.domain)
+        with open('{}scripts/ca_bash.sh'.format(self.path), 'w+') as file:
+            file.write(text)
+        # Update permissions for executable
+        st = os.stat('{}scripts/ca_bash.sh'.format(self.path))
+        os.chmod('{}scripts/ca_bash.sh'.format(self.path), st.st_mode | stat.S_IEXEC)
+
+
     def create_ca_bash(self):
         text = '#!/bin/bash\n'
         for org in range(self.numOrgs):
@@ -133,7 +149,8 @@ class ComposeFabric(object):
                 "memberOnlyRead": True
             }
             collections.append(private_collection)
-        with open('{}scripts/collections.json'.format(self.path), 'w+') as file:
+        os.makedirs(os.path.dirname('{}scripts/collections.json'.format(self.subpath)), exist_ok=True)
+        with open('{}scripts/collections.json'.format(self.subpath), 'w+') as file:
             json.dump(collections, file, indent=4)
             
     def create_compose_raft(self):
@@ -148,19 +165,19 @@ class ComposeFabric(object):
             orderer = OrderedDict()
             orderer['container_name'] = 'orderer{}.{}'.format(order, self.domain)
             orderer['extends'] = OrderedDict()
-            orderer['extends']['file'] = './base/peer-base.yaml'
+            orderer['extends']['file'] = 'base/docker-compose-base.yaml'
             orderer['extends']['service'] = 'orderer-base'
             orderer['ports'] = [str(7050 + 1000*order) + ':' + str(7050)]
             self.ports['orderer{}.{}'.format(order, self.domain)] = (7050 + 1000*order)
             orderer['networks'] = [self.netName]
-            orderer['volumes'] = ['./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                                    './crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/msp:/var/hyperledger/orderer/msp'.format(self.domain, order),
-                                    './crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/tls/:/var/hyperledger/orderer/tls'.format(self.domain, order),
+            orderer['volumes'] = ['{0}channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block'.format(self.subpath),
+                                    '{0}crypto-config/ordererOrganizations/{1}/orderers/orderer{2}.{1}/msp:/var/hyperledger/orderer/msp'.format(self.subpath, self.domain, order),
+                                    '{2}crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/tls/:/var/hyperledger/orderer/tls'.format(self.domain, order, self.subpath),
                                     'orderer{}.{}:/var/hyperledger/production/orderer'.format(order, self.domain)]
             orderers.append(orderer)
             doc['volumes'][orderer['container_name']] = None
         doc['services'] = OrderedDict((c['container_name'],c) for c in orderers)
-        with open('{}docker-compose-etcdraft2.yaml'.format(self.path), 'w') as file:
+        with open('{}docker-compose-etcdraft2.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
         
     def create_compose_db(self, user='admin', password='adminpw'):
@@ -175,8 +192,8 @@ class ComposeFabric(object):
             for peer in range(self.numPeers[org]):
                 # Database Dictionary
                 db = OrderedDict()
-                db['container_name'] = 'couchdb{}'.format(index)
-                db['image'] = 'couchdb:3.1.1' #'hyperledger/fabric-couchdb'
+                db['container_name'] = 'couchdb{}.{}'.format(index, self.domain)
+                db['image'] = 'couchdb:3.1.1'
                 if self.arm64:
                     db['image'] = 'chinyati/fabric-couchdb:arm64-0.4.20'
                 db['environment'] = ['COUCHDB_USER={}'.format(user),
@@ -188,7 +205,7 @@ class ComposeFabric(object):
                 # Peer Dictionary
                 Peer = OrderedDict()
                 Peer['environment'] = ['CORE_LEDGER_STATE_STATEDATABASE=CouchDB',
-                                        'CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb{}:5984'.format(index),
+                                        'CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb{}.{}:5984'.format(index, self.domain),
                                         'CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME={}'.format(user),
                                         'CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD={}'.format(password)]
                 Peer['depends_on'] = ['couchdb{}'.format(index)]
@@ -198,11 +215,11 @@ class ComposeFabric(object):
         index = 0
         for c in containers:
             try:
-                doc['services'][c['container_name']] = c
+                doc['services'][c['container_name'].replace('.' + self.domain, '')] = c
             except:
                 doc['services'][peers[index]] = c  
                 index += 1
-        with open('{}docker-compose-couch.yaml'.format(self.path), 'w') as file:
+        with open('{}docker-compose-couch.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
     
     def create_compose_ca(self):
@@ -228,11 +245,11 @@ class ComposeFabric(object):
                                   'FABRIC_CA_SERVER_PORT={}'.format(port)]
             ca['ports'] = [port + ':' + port]
             ca['command'] = folded_str("sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org%d.%s-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${NET_CA%d_PRIVATE_KEY} -b admin:adminpw -d'" % (org + 1, self.domain, org + 1))
-            ca['volumes'] = ['./crypto-config/peerOrganizations/org{}.{}/ca/:/etc/hyperledger/fabric-ca-server-config'.format(org + 1, self.domain)]
+            ca['volumes'] = ['{}crypto-config/peerOrganizations/org{}.{}/ca/:/etc/hyperledger/fabric-ca-server-config'.format(self.subpath, org + 1, self.domain)]
             ca['networks'] = [self.netName]
             cas.append(ca)
         doc['services'] = OrderedDict(('ca{}'.format(i), ca) for i,ca in zip(range(len(cas)), cas))
-        with open('{}docker-compose-ca.yaml'.format(self.path), 'w') as file:
+        with open('{}docker-compose-ca.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
         
     def create_base(self):
@@ -278,7 +295,7 @@ class ComposeFabric(object):
                                                            'ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]']
         doc['services']['orderer-base']['working_dir'] = '/opt/gopath/src/github.com/hyperledger/fabric'
         doc['services']['orderer-base']['command'] = 'orderer'
-        with open('{}base/peer-base.yaml'.format(self.path), 'w') as file:
+        with open('{}base/peer-base.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
     
     def create_compose_base(self, export=True):
@@ -293,9 +310,9 @@ class ComposeFabric(object):
         orderer['extends']['file'] = 'peer-base.yaml'
         orderer['extends']['service'] = 'orderer-base'
         orderer['ports'] = ['7050:7050']
-        orderer['volumes'] = ['../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                                '../crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/msp:/var/hyperledger/orderer/msp'.format(self.domain, orderer_number), 
-                                '../crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/tls:/var/hyperledger/orderer/tls'.format(self.domain, orderer_number),
+        orderer['volumes'] = ['{}channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block'.format(self.subpath),
+                                '{2}crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/msp:/var/hyperledger/orderer/msp'.format(self.domain, orderer_number, self.subpath), 
+                                '{2}crypto-config/ordererOrganizations/{0}/orderers/orderer{1}.{0}/tls:/var/hyperledger/orderer/tls'.format(self.domain, orderer_number, self.subpath),
                                 'orderer{}.{}:/var/hyperledger/production/orderer'.format(orderer_number, self.domain)] 
         # Processing Peers by Organizations
         self.peers = []
@@ -325,8 +342,8 @@ class ComposeFabric(object):
                 Peer['extends']['service'] = 'peer-base'
                 Peer['ports'] = [str(7051 + 1000*totalPeers) + ':' + str(7051 + 1000*totalPeers)]
                 Peer['volumes'] = ['/var/run/:/host/var/run/',
-                                     '../crypto-config/peerOrganizations/org{0}.{1}/peers/peer{2}.org{0}.{1}/msp:/etc/hyperledger/fabric/msp'.format(org + 1, self.domain, peer),
-                                     '../crypto-config/peerOrganizations/org{0}.{1}/peers/peer{2}.org{0}.{1}/tls:/etc/hyperledger/fabric/tls'.format(org + 1, self.domain, peer),
+                                     '{3}crypto-config/peerOrganizations/org{0}.{1}/peers/peer{2}.org{0}.{1}/msp:/etc/hyperledger/fabric/msp'.format(org + 1, self.domain, peer, self.subpath),
+                                     '{3}crypto-config/peerOrganizations/org{0}.{1}/peers/peer{2}.org{0}.{1}/tls:/etc/hyperledger/fabric/tls'.format(org + 1, self.domain, peer, self.subpath),
                                      'peer{}.org{}.{}:/var/hyperledger/production'.format(peer, org + 1, self.domain)]
                 self.peers.append(Peer)
                 totalPeers += 1
@@ -338,7 +355,7 @@ class ComposeFabric(object):
             index += self.numPeers[org]
         doc['services'] = OrderedDict((c['container_name'],c) for c in [orderer] + self.peers)
         if export:
-            with open('{}base/docker-compose-base.yaml'.format(self.path), 'w') as file:
+            with open('{}base/docker-compose-base.yaml'.format(self.subpath), 'w') as file:
                 yaml.dump(doc, file, default_flow_style=False)
     
     def create_compose(self):
@@ -369,7 +386,7 @@ class ComposeFabric(object):
                 peers.append(Peer)
         # Processing CLI
         cli = OrderedDict()
-        cli['container_name'] = 'cli'
+        cli['container_name'] = 'cli.{}'.format(self.domain)
         cli['image'] = 'hyperledger/fabric-tools:2.3'
         if self.arm64:
             cli['image'] = 'chinyati/fabric-tools:arm64-2.1.0'
@@ -379,7 +396,7 @@ class ComposeFabric(object):
                                'GOPATH=/opt/gopath',
                                'CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock',
                                'FABRIC_LOGGING_SPEC=INFO',
-                               'CORE_PEER_ID=cli',
+                               'CORE_PEER_ID=cli.{}'.format(self.domain),
                                'CORE_PEER_ADDRESS=peer0.org1.{}:7051'.format(self.domain),
                                'CORE_PEER_LOCALMSPID=Org1MSP',
                                'CORE_PEER_TLS_ENABLED=true',
@@ -390,16 +407,23 @@ class ComposeFabric(object):
         cli['working_dir'] = '/opt/gopath/src/github.com/hyperledger/fabric/peer'
         cli['command'] = '/bin/bash'
         cli['volumes'] = ['/var/run/:/host/var/run/',
-                           './chaincode/:/opt/gopath/src/github.com/chaincode',
-                           './crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/',
-                           './scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/',
-                           './channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts']
+                           '{}chaincode/:/opt/gopath/src/github.com/chaincode'.format(self.subpath),
+                           '{}crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/'.format(self.subpath),
+                           '{}scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/'.format(self.subpath),
+                           '{}channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts'.format(self.subpath)]
         cli['depends_on'] = [orderer['container_name']] + [p['container_name'] for p in peers]
         cli['networks'] = [self.netName]
         for c in [orderer] + peers:
             doc['volumes'][c['container_name']] = None
-        doc['services'] = OrderedDict((c['container_name'],c) for c in [orderer] + peers + [cli])
-        with open('{}docker-compose.yaml'.format(self.path), 'w') as file:
+        containers = [orderer] + peers + [cli]
+        names = []
+        for c in containers:
+            if 'cli.' in c['container_name']:
+                names.append(c['container_name'].replace('.' + self.domain, ''))
+            else:
+                names.append(c['container_name'])
+        doc['services'] = OrderedDict((n,c) for n, c in zip(names, containers))
+        with open('{}docker-compose.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
             
     def create_crypto(self):
@@ -430,7 +454,7 @@ class ComposeFabric(object):
             peerOrg['Users'] = OrderedDict()
             peerOrg['Users']['Count'] = self.numUsers[org]
             doc['PeerOrgs'].append(peerOrg)
-        with open('{}crypto-config.yaml'.format(self.path), 'w') as file:
+        with open('{}crypto-config.yaml'.format(self.subpath), 'w') as file:
             yaml.dump(doc, file, default_flow_style=False)
             
     def create_ccp(self):
@@ -453,7 +477,7 @@ class ComposeFabric(object):
             doc['organizations']['Org{}'.format(org + 1)]['certificateAuthorities'] = ['ca.org{}.{}'.format(org + 1, self.domain)]
             doc['peers'] = OrderedDict()
             for peer in range(self.numPeers[org]):
-                with open('{2}crypto-config/peerOrganizations/org{0}.{1}/tlsca/tlsca.org{0}.{1}-cert.pem'.format(org + 1, self.domain, self.path)) as file:
+                with open('{2}crypto-config/peerOrganizations/org{0}.{1}/tlsca/tlsca.org{0}.{1}-cert.pem'.format(org + 1, self.domain, self.subpath)) as file:
                     pem = ''
                     for line in file:
                         pem += line
@@ -464,7 +488,7 @@ class ComposeFabric(object):
                 doc['peers']['peer{}.org{}.{}'.format(peer, org + 1, self.domain)]['grpcOptions'] = OrderedDict()
                 doc['peers']['peer{}.org{}.{}'.format(peer, org + 1, self.domain)]['grpcOptions']['ssl-target-name-override'] = 'peer{}.org{}.{}'.format(peer, org + 1, self.domain)
                 doc['peers']['peer{}.org{}.{}'.format(peer, org + 1, self.domain)]['grpcOptions']['hostnameOverride'] = 'peer{}.org{}.{}'.format(peer, org + 1, self.domain)
-            with open('{2}crypto-config/peerOrganizations/org{0}.{1}/ca/ca.org{0}.{1}-cert.pem'.format(org + 1, self.domain, self.path)) as file:
+            with open('{2}crypto-config/peerOrganizations/org{0}.{1}/ca/ca.org{0}.{1}-cert.pem'.format(org + 1, self.domain, self.subpath)) as file:
                 pem = ''
                 for line in file:
                     pem += line
@@ -477,9 +501,9 @@ class ComposeFabric(object):
             doc['certificateAuthorities']['ca.org{}.{}'.format(org + 1, self.domain)]['httpOptions'] = OrderedDict()
             doc['certificateAuthorities']['ca.org{}.{}'.format(org + 1, self.domain)]['httpOptions']['verify'] = False
             # Store Dictionaries in both JSON and YAML format
-            with open('{}connection-org{}.json'.format(self.path, org + 1), 'w') as file:
+            with open('{}connection-org{}.json'.format(self.subpath, org + 1), 'w') as file:
                 json.dump(doc, file, indent=4)
-            with open('{}connection-org{}.yaml'.format(self.path, org + 1), 'w') as file:
+            with open('{}connection-org{}.yaml'.format(self.subpath, org + 1), 'w') as file:
                 yaml.dump(doc, file, default_flow_style=False)
         
     def create_configtx(self, anchors=1):
@@ -658,21 +682,23 @@ class ComposeFabric(object):
             doc['Profiles']['Channel{}'.format(c+1)]['Application']['Organizations'].extend(orgs)
             doc['Profiles']['Channel{}'.format(c+1)]['Application']['Capabilities'] = CommentedMap()
             doc['Profiles']['Channel{}'.format(c+1)]['Application']['Capabilities'].add_yaml_merge([(0, doc['Capabilities']['Application'])])
-        with open('{}configtx.yaml'.format(self.path),'w') as file:
+        with open('{}configtx.yaml'.format(self.subpath),'w') as file:
             ryaml.dump(doc, file)
     
     def create_fabric(self, project_name='net', orderers=4):
         self.project_name = project_name
         # Removing unnecessary directories
-        if os.path.exists("{}/config".format(self.path)) and os.path.isdir("{}/config".format(self.path)):
-            shutil.rmtree("{}/config".format(self.path))
-        print("[*] Files will be generated in '%s'" % self.path)
-        print("[+] Generating base files in './base'...", end='')
+        if os.path.exists("{}/config".format(self.subpath)) and os.path.isdir("{}/config".format(self.subpath)):
+            shutil.rmtree("{}/config".format(self.subpath))
+        print("[*] Files will be generated in '%s'" % self.subpath)
+        print("[+] Generating base files in '../base'...", end='')
         # Creates base files
         self.create_base()
         self.create_compose_base()
         print('DONE')
         print("[+] Generating compose files...", end='')
+        if not os.path.exists("{}/chaincode".format(self.subpath)):
+            os.mkdir("{}/chaincode".format(self.subpath))
         # Creates docker-compose file
         self.create_compose()
         self.set_orderers(orderers) # original 4
@@ -689,7 +715,7 @@ class ComposeFabric(object):
         print('DONE')
         # Exports file containing port map
         #print("[+] Exporting 'container-port' mapping into JSON...", end='')
-        #with open('{}scripts/port_map.json'.format(self.path), 'w+') as file:
+        #with open('{}scripts/port_map.json'.format(self.subpath), 'w+') as file:
         #    json.dump(self.ports, file, indent=4)
         #print("DONE")
         print("[+] Generating certificate config files...", end='')
@@ -757,7 +783,7 @@ class ComposeFabric(object):
                                             self.nameChannels[0])
 
         
-        
+# TODO - revise to update path (if needed)        
 class ComposeCaliper(object):
     def __init__(self, number_organizations, number_peers, number_orderers, 
                  channel, consortium, domain_name, contracts):
@@ -899,6 +925,7 @@ class ComposeCaliper(object):
         self.caliper.instantiateCaliper()
         print("DONE\n")
 
+# TODO - revise to update path (if needed)  
 class ComposeMqtt(object):
     
     def __init__(self, number_organizations, domain_name, net_names, 
@@ -955,7 +982,8 @@ class ComposeMqtt(object):
         print("[+] Generating environmental variable file...", end='')
         self.create_env()
         print("DONE\n")
-            
+
+# TODO - revise to update path (if needed)            
 class ComposeEMR(object):
     
     def __init__(self, number_emrs, domain_name, net_name):

@@ -25,6 +25,10 @@ router.get('/contracts', function(req, res) {
     res.render('contracts', { bid: req.query.bid, chid: req.query.chid });
 });
 
+router.get('/newcontract', function(req, res) {
+    res.render('newcontract', { bid: req.query.bid, chid: req.query.chid });
+});
+
 router.get('/users', function(req, res) {
     res.render('users', { bid: req.query.bid, oname: req.query.oname });
 });

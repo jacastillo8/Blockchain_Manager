@@ -7,8 +7,8 @@ import { FabricConfigurationProfile } from "./utils/interfaces";
 
 const { getCCP, getWallet, getMSP } = require('./utils/misc');
 
-function getCA(organizationName: string) {
-    const ccp: FabricConfigurationProfile = getCCP(organizationName);
+function getCA(organizationName: string, owner: string) {
+    const ccp: FabricConfigurationProfile = getCCP(organizationName, owner);
     const caInfo = Object.values(ccp.certificateAuthorities)[0];
     const caTLSACerts = caInfo.tlsCACerts.pem;
     return new FabricCAServices(caInfo.url, { trustedRoots: caTLSACerts, verify: false }, caInfo.caName);;
@@ -39,9 +39,9 @@ async function createNewAffiliation(ca: FabricCAServices, organizationName: stri
 }
 
 export class Enrollment {
-    async admin(user: Admin) {
-        const ca = getCA(user.org);
-        const wallet: Wallet = await getWallet(user.org);
+    async admin(user: Admin, owner: string) {
+        const ca = getCA(user.org, owner);
+        const wallet: Wallet = await getWallet(user.org, owner);
     
         if (!await wallet.get(user.enrollmentID)) {
             let enrollment = await ca.enroll({ enrollmentID: user.enrollmentID, enrollmentSecret: user.enrollmentSecret });
@@ -61,9 +61,9 @@ export class Enrollment {
         return wallet.get(user.enrollmentID);
     }
 
-    async client(user: Client, adminIdentity: any) {
-        const ca = getCA(user.org);
-        const wallet = await getWallet(user.org);
+    async client(user: Client, adminIdentity: any,  owner: string) {
+        const ca = getCA(user.org, owner);
+        const wallet: Wallet = await getWallet(user.org, owner);
     
         if (!await wallet.get(user.enrollmentID)) {
             let adminUser = await getAdminUser(wallet, adminIdentity);

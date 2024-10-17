@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 
 const Transaction = require('../models/transaction');
 const Chain = require('../models/chain');
@@ -8,23 +9,33 @@ const Chain = require('../models/chain');
 const { Blockchain } = require('../services/Blockchain');
 const { storeChainId, updateChainId, appendNewChainUser, 
     generateChainId, searchChainId, appendNewChainContract, 
-    updateChainBenchmark, appendNewChannel } = require('../services/ChainModel');
+    updateChainBenchmark, appendNewChannel, removeChainId } = require('../services/ChainModel');
 const MAX_CHUNK_SIZE = 28; // MB - FUTURE: PROVIDED IN UTILS
 
 const router = express.Router();
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
-        cb(null, './uploads');
+        let owner = req.params.owner;
+        // Create a directory based on the file name
+        const uploadDir = path.join(__dirname, '..', '..', 'blockchain_base', 'chains', `bc_${owner}`, 'chaincode', req.body.name);
+
+        // Check if the directory exists, if not, create it
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });  // Create directory recursively
+        }
+
+        // Set the upload directory as the destination
+        cb(null, uploadDir);
     }, 
     filename: function(req, file, cb) {
-        cb(null, `${Date.now()}.${file.originalname.split('.')[1]}`);
+        if (path.extname(file.originalname) === '.js') cb(null, `${file.originalname}`);
+        else cb(null, `package${path.extname(file.originalname)}`)
     }
 });
 
 const fileFilter = function(req, file, cb) {
-    // FUTURE: IMPLEMENT FILTER DEFINITION DEPENDING ON CONTRACTS
-    if (file.originalname.split('.')[1] !== 'exe') cb(null, true);
+    if (path.extname(file.originalname) === '.js' || path.extname(file.originalname) === '.json') cb(null, true);
     else cb(new Error('Invalid File'), false);
 }
 
@@ -48,6 +59,13 @@ async function checkChainId(req, res, next) {
         return
     }
     else res.status(404).json({});
+}
+
+async function addParams(req, res, next) {
+    let doc = res.locals.doc;
+    req.params.owner = doc.owner;
+    next();
+    return;
 }
 
 function isBodyEmpty(req, res, next) {
@@ -83,11 +101,6 @@ function prepareEndpoint(req, res, next) {
 // Routes
 router.get('/', async function(req, res) {
     let chains = await Chain.find({});
-    /*if (chains.length > 0) {
-        chains = chains.map((item) => {
-            return {bid: item.id, owner: item.owner};
-        });
-    }*/
     res.status(200).json(chains);
 });
 
@@ -114,14 +127,17 @@ router.get('/:bid', async function(req, res) {
     res.json(bc.info);
 });
 
-/*router.delete('/:bid', async function(req, res) {
+router.delete('/:bid', async function(req, res) {
     let doc = res.locals.doc;
-    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner);
-    // MISSING A PROPER CLEAN METHOD
-    await bc.clean();
-    removeChainId(bid);
+    let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
+    let status = await bc.clean();
+    if (!status) {
+        res.status(500).json({});
+        return;
+    }
+    removeChainId(doc.id);
     res.json({});
-});*/
+});
 
 router.get('/:bid/block', function(req, res) {
     let doc = res.locals.doc;
@@ -187,7 +203,7 @@ router.get('/:bid/config/:orgName', function(req, res) {
     for (let i=0; i<enrolledOrgs.length; i++) {
         let org = enrolledOrgs[i];
         if (org.name === req.params.orgName) {
-            res.download(`${__dirname}/../../blockchain_base/connection-${org.id.toLowerCase()}.json`);
+            res.download(path.join(__dirname, '..', '..', 'blockchain_base', 'chains', `bc_${doc.owner}`, `connection-${org.id.toLowerCase()}.json`));
             return
         }
     }
@@ -205,7 +221,7 @@ router.get('/:bid/wallet/:userName/:orgName', function(req, res) {
             for (let j=0; j<enrolledUsers.length; j++) {
                 let user = enrolledUsers[j];
                 if (user.enrollmentID === req.params.userName) {
-                    res.download(`${__dirname}/../wallets/wallet_${org.id}/${user.enrollmentID}.id`);
+                    res.download(path.join(__dirname, '..', '..', 'blockchain_base', 'chains', `bc_${doc.owner}`, 'wallets', `wallet_${org.id}/${user.enrollmentID}.id`));
                     return;
                 }
             }
@@ -258,7 +274,7 @@ router.get('/:bid/contracts', function(req, res) {
     res.json(bc.contracts);
 });
 
-router.post('/:bid/contracts', async function(req, res) {
+router.post('/:bid/contracts', addParams, upload.array('files', 2), async function(req, res) {
     let doc = res.locals.doc;
     let body = req.body;
     if (doc.status) {
@@ -289,7 +305,7 @@ router.post('/:bid/contracts', async function(req, res) {
 });*/
 
 // remove async
-router.post('/:bid/:cid/document/insert', upload.single('document'), prepareEndpoint, function(req, res) {
+/*router.post('/:bid/:cid/document/insert', upload.single('document'), prepareEndpoint, function(req, res) {
     let doc = res.locals.doc;
     let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let endpoint = res.locals.endpoint;
@@ -386,7 +402,7 @@ router.post('/:bid/:cid/document/evaluate', prepareEndpoint, async function(req,
         newTX.save();
         res.status(500).json({ error: err.message });
     }
-});
+});*/
 
 router.post('/:bid/:cid/insert', prepareEndpoint, async function(req, res) {
     let doc = res.locals.doc;
@@ -407,7 +423,7 @@ router.post('/:bid/:cid/insert', prepareEndpoint, async function(req, res) {
             endpoint: message.method,
             exceptionRaised: false,
             type: 'insert',
-            inTransit: Date.now() - startTime //- 2000 // compensate for 2s added to avoid phantom read - check Blockchain.submit
+            inTransit: Date.now() - startTime
         });
         newTX.save();
         res.json({ result });

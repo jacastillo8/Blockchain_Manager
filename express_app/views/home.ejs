@@ -70,7 +70,8 @@
                 const response = await fetch('/api');
                 let data = await response.json();
                 data = data.map(i => {
-                    return { bid: i.id, owner: i.owner }
+                    if (i.status) return { bid: i.id, owner: i.owner, status: 'active' }
+                    else return { bid: i.id, owner: i.owner, status: 'inactive' }
                 });
             
                 var table = document.getElementById("dataTable");

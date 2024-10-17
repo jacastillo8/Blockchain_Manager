@@ -37,6 +37,9 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        #remove {
+            background-color: rgb(151, 6, 6);
+        }
         .btn:disabled {
             background-color: #666;
         }
@@ -118,6 +121,14 @@
                     buttonBen.appendChild(buttonB);
                     dataRow.appendChild(buttonBen);
 
+                    const buttonRem = document.createElement("td");
+                    const buttonC = document.createElement("button");
+                    buttonC.innerHTML = "Remove";
+                    buttonC.className = "btn";
+                    buttonC.id = "remove";
+                    buttonRem.appendChild(buttonC);
+                    dataRow.appendChild(buttonRem);
+
                     const statusCell = document.getElementById('status');
                     const benchmarkCell = document.getElementById('benchmark');
                     if (statusCell.innerText === 'true') buttonA.disabled = true;
@@ -148,6 +159,11 @@
                         // logic here
                         benchmarkCell.innerText = true;
                     });*/
+                    buttonC.addEventListener('click', async () => {
+                        const response = await fetch(`/api/${bid}`, { method: 'DELETE' });
+                        const result = await response.json();
+                        window.location.href = "/";
+                    });
 
                     const dataCols = table.querySelectorAll('td'); 
                     dataCols.forEach((col, i) => {

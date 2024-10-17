@@ -29,6 +29,15 @@
             padding: 8px;
             text-align: center;
         }
+        input[type="submit"] {
+            width: 100%; /* Full width of the grid */
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: #0f41e4ad;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +61,9 @@
             <h2>Contracts for Channel: <%= chid%> <br>BID: <%= bid%></h2>
             <br>
             <table id="dataTable"></table>
+            <div>
+                <input type="submit" value="New Contract" id="btn_contract">
+            </div>
         </main>
     </div>
 
@@ -117,6 +129,10 @@
             }
         }
         fetchDataAndRender(id, chid);
+        const btn = document.getElementById('btn_contract');
+        btn.addEventListener('click', () => {
+            window.location.href = `/newcontract?bid=${id}&chid=${chid}`;
+        })
     </script>
 
     <footer>

@@ -5,7 +5,7 @@ import { Admin, Client, Contract, Organization } from "./utils/factories";
 import { BlockStructure, Channel, Endpoint, Message } from "./utils/interfaces";
 
 const { shell, containsObject, isDuplicate, prepareEndpoint, wait,
-        isUsernameExists } = require('./utils/misc');
+        isUsernameExists, removeBCFiles } = require('./utils/misc');
 
 /*function extractPeers(organizations) {
     let peers = [];
@@ -145,7 +145,7 @@ export class Blockchain {
                     return orgIDs.join(',')
                 });
                 let blockParams = `--block ${this._block.timeout} ${this._block.batch_size.max_messages} ${this._block.batch_size.max_bytes}`;
-                let args = `-O ${orgs} -p ${peers} -u 1 -o ${Number(this._orderers) - 1} -d ${this._owner.toLowerCase()} -n blockchain -C ${channelNames.join(' ')} -c ${consortiums.join(' ')} ${blockParams}`;
+                let args = `-O ${orgs} -p ${peers} -u 1 -o ${Number(this._orderers) - 1} -d ${this._owner.toLowerCase()} -n ${this._owner.toLowerCase()} -C ${channelNames.join(' ')} -c ${consortiums.join(' ')} ${blockParams} --folder bc_${this._owner.toLowerCase()}`;
                 console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
                 let result = await shell(`${python} ${scriptPath} ${args}`);
                 console.log('[+] Network generated');
@@ -194,6 +194,22 @@ export class Blockchain {
         }
         return result;
     }*/
+   async clean() {
+        try {
+            let python = await getPythonEnv();
+            let scriptPath = 'scripts/remove_fabric.py';
+            let args = `-t ${this._owner}`;
+            console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+            let result = await shell(`${python} ${scriptPath} ${args}`);
+            if (result.code === 1) throw new Error(`[!] Unable to remove containers: ${result.stderr}`);
+            console.log(`[-] Target containers removed: ${this._owner}`);
+            if (!removeBCFiles(this._owner)) throw new Error("[!] Unable to remove blockchain files");
+            return true;
+        } catch (err: any) {
+            console.log(err.message);
+            return false;
+        }
+   }
 
     async enroll(client: Client) {
         let enroll = new Enrollment();
@@ -207,8 +223,8 @@ export class Blockchain {
             else {
                 try {
                     // Get admin identity, enroll admin if not enrolled
-                    let adminIdentity = await enroll.admin(new Admin('admin', client.org, 'adminpw'));
-                    await enroll.client(client, adminIdentity);
+                    let adminIdentity = await enroll.admin(new Admin('admin', client.org, 'adminpw'), this._owner);
+                    await enroll.client(client, adminIdentity, this._owner);
                 } catch (error) {
                     console.log(`[!] Failed to enroll user:\n${error}`);
                 }
@@ -241,12 +257,12 @@ export class Blockchain {
             
             let result: any;
             if (contract.belongsTo === "All") {
-                let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + version[0]} -v ${version}`;
+                let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + version[0]} -v ${version} --folder bc_${this._owner}`;
                 console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
                 result = await shell(`${python} ${scriptPath} ${args}`);
             } else {
                 let orgID = this._organizations.filter(entry => entry.name === belongsTo)[0].id;
-                let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + orgID.slice(-1)} -v ${version} -o ${orgID.slice(-1)}`;
+                let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + orgID.slice(-1)} -v ${version} -o ${orgID.slice(-1)} --folder bc_${this._owner}`;
                 console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
                 result = await shell(`${python} ${scriptPath} ${args}`);
             }
@@ -256,8 +272,7 @@ export class Blockchain {
             else throw new Error(`Exception caused by: ${result.stderr}`);
         }
         if (!containsObject(contract, this._contracts)) this._contracts.push(contract);
-        // Wait 5s for CC instantiation to complete
-        //await wait(5000);
+        // Wait for CC instantiation to complete
         console.log('[!] Contract instantiation complete');
         return { cid };
     }
@@ -308,7 +323,7 @@ export class Blockchain {
 
     async evaluate(message: Message, endpoint: Endpoint, json=false) {
         console.log('[+] Evaluating transaction...');
-        const { contract, gateway } = await prepareEndpoint(endpoint);
+        const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
         let buffer = await contract.evaluateTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
         await gateway.disconnect();
         if (json) return JSON.parse(buffer.toString());
@@ -318,11 +333,9 @@ export class Blockchain {
     async submit(message: Message, endpoint: Endpoint, json=false) {
         try {
             console.log('[+] Submiting transaction...');
-            const { contract, gateway } = await prepareEndpoint(endpoint);
+            const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
             let buffer = await contract.submitTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
             await gateway.disconnect();
-            // Wait 2s to avoid Phantom read errors
-            //await wait(2000);
             if (json) return JSON.parse(buffer.toString());
             else return buffer;
         } catch (err: any) {
