@@ -1,22 +1,7 @@
 /express_app/node_modules
-/express_app/wallets/*
 /express_app/scripts/build_compose/__pycache__
 /express_app/package-lock.json
-!/express_app/wallets/.gitkeep
 
-/blockchain_base/base/*
-/blockchain_base/benchmarks/*
-/blockchain_base/build_compose/__pycache__
-/blockchain_base/channel-artifacts
-/blockchain_base/crypto-config
-/blockchain_base/.*
-/blockchain_base/*.yaml
-/blockchain_base/*.json
-/blockchain_base/*.html
-/blockchain_base/*.log
-/blockchain_base/scripts/*.json
-/blockchain_base/scripts/ca_bash.sh
-/blockchain_base/log.txt
+/blockchain_base/chains/*
 !/blockchain_base/.gitignore
-!/blockchain_base/base/.gitkeep
-!/blockchain_base/benchmarks/.gitkeep
+!/blockchain_base/chains/.gitkeep
