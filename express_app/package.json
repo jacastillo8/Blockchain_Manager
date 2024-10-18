@@ -17,10 +17,13 @@
   "author": "Jorge Castillo",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "consolidate": "^1.0.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^8.2.0",
     "ejs": "^3.1.10",
     "express": "^4.17.1",
+    "express-session": "^1.18.1",
     "fabric-ca-client": "beta",
     "fabric-network": "beta",
     "fs": "0.0.1-security",

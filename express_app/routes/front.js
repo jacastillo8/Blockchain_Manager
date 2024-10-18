@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const { authenticateSession, isAdmin } = require('./auth');
+
 router.get('/', function(req, res) {
     res.render('home');
 });
@@ -37,8 +39,16 @@ router.get('/newuser', function(req, res) {
     res.render('newuser', { bid: req.query.bid, oname: req.query.oname });
 });
 
-router.get('/new', function(req, res) {
+router.get('/new', authenticateSession, isAdmin, function(req, res) {
     res.render('newchain');
+});
+
+router.get('/login', function(req, res) {
+    res.render('login');
+});
+
+router.get('/register', function(req, res) {
+    res.render('register');
 });
 
 module.exports = router;

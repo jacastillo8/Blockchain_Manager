@@ -10,6 +10,9 @@ const { Blockchain } = require('../services/Blockchain');
 const { storeChainId, updateChainId, appendNewChainUser, 
     generateChainId, searchChainId, appendNewChainContract, 
     updateChainBenchmark, appendNewChannel, removeChainId } = require('../services/ChainModel');
+
+const { authenticateSession, isAdmin } = require('./auth');
+
 const MAX_CHUNK_SIZE = 28; // MB - FUTURE: PROVIDED IN UTILS
 
 const router = express.Router();
@@ -104,10 +107,10 @@ router.get('/', async function(req, res) {
     res.status(200).json(chains);
 });
 
-router.post('*', isBodyEmpty);
-router.all('/:bid*', checkChainId);
+router.post('*', isBodyEmpty, authenticateSession);
+router.all('/:bid*', checkChainId, authenticateSession);
 
-router.post('/', async function(req, res) {
+router.post('/', isAdmin, async function(req, res) {
     let body = req.body;
     let bid = await generateChainId(body);
     if (bid !== null) {
@@ -127,7 +130,7 @@ router.get('/:bid', async function(req, res) {
     res.json(bc.info);
 });
 
-router.delete('/:bid', async function(req, res) {
+router.delete('/:bid', isAdmin, async function(req, res) {
     let doc = res.locals.doc;
     let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let status = await bc.clean();
@@ -151,7 +154,7 @@ router.get('/:bid/channel', function(req, res) {
     res.json(bc.info.channels);
 });
 
-router.post('/:bid/channel', async function(req, res) {
+router.post('/:bid/channel', isAdmin, async function(req, res) {
     let doc = res.locals.doc;
     let channel = req.body;
     let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
@@ -160,7 +163,7 @@ router.post('/:bid/channel', async function(req, res) {
     res.status(201).json({});
 })
 
-router.get('/:bid/build', async function(req, res) {
+router.get('/:bid/build', isAdmin, async function(req, res) {
     try {
         let doc = res.locals.doc;
         if (!doc.status) {
@@ -177,7 +180,7 @@ router.get('/:bid/build', async function(req, res) {
     }
 });
 
-router.post('/:bid/benchmark', async function(req, res) {
+router.post('/:bid/benchmark', isAdmin, async function(req, res) {
     try {
         let doc = res.locals.doc;
         let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
@@ -248,7 +251,7 @@ router.get('/:bid/users/:orgName', function(req, res) {
     res.json(bc.users(req.params.orgName));
 });
 
-router.post('/:bid/users', async function(req, res) {
+router.post('/:bid/users', isAdmin, async function(req, res) {
     let doc = res.locals.doc;
     let body = req.body;
     if (doc.status) {

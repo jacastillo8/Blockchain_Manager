@@ -51,14 +51,7 @@
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/new">New Blockchain</a></li>
-                <!--<li><a href="/services">Services</a></li>
-                <li><a href="/contact">Contact</a></li> -->
-            </ul>
-        </nav>
+        <%- include('partials/navbar', { user: user }) %>
     </header>
 
     <div class="content-container">
@@ -123,9 +116,6 @@
         })
     </script>
 
-    <footer>
-        <!-- Your footer content goes here -->
-        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
-    </footer>
+    <%- include('partials/footer') %>
 </body>
 </html>

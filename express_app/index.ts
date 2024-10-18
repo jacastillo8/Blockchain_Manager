@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
+//const cookieParser = require('cookie-parser');
 const path = require('path');
 const mongoose = require('mongoose');
 const cons = require('consolidate');
@@ -29,14 +31,27 @@ db.on('disconnected', function() {
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+//app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 
 // Setting EJS engine
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-//app.set('view engine', 'ejs');
-//app.engine('html', cons.swig)
 app.set('view engine', 'ejs');
+
+// Session middleware configuration
+app.use(session({
+    secret: process.env.SECRET_KEY, // Store session secret in .env
+    resave: false,                      // Don't save session if unmodified
+    saveUninitialized: true,            // Save new sessions
+    cookie: { secure: false }           // In production, set secure: true if using https
+}));
+
+// Middleware to make user available to all views
+app.use((req: any, res: any, next: any) => {
+    res.locals.user = req.session.user; // Makes the logged-in user available in views
+    next();
+});
 
 app.use(function (req: any, res: any, next: any) {
     //Enabling CORS
@@ -49,9 +64,11 @@ app.use(function (req: any, res: any, next: any) {
 const api = require('./routes/api');
 const front = require('./routes/front');
 const metrics = require('./routes/metrics');
+const auth = require('./routes/auth');
 app.use('/api', api);
 app.use('/', front);
 app.use('/metrics', metrics);
+app.use('/auth', auth);
 
 let port = process.env.PORT;
 app.listen(port, function() {

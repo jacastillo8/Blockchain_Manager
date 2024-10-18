@@ -56,48 +56,44 @@
 
     <div class="content-container">
         <main>
-            <!-- Your main content goes here -->
-            <h2>New User Form</h2>
-            <br>
-            <form id="usr" class="form-grid">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name">
+            <h1>Register Student Form</h1>
+            <form id="login" action="/auth/register" method="POST">
+              <label for="email">Email:</label>
+              <input type="email" name="email" id="email" required>
+        
+              <label for="password">Password:</label>
+              <input type="password" name="password" id="password" required>
 
-                <label for="org">Organization:</label>
-                <input type="text" id="org" name="org" value=<%=oname%> disabled>
-
-                <label for="department">Department:</label>
-                <input type="text" id="department" name="department" style="grid-column: span 3;">
             </form>
             <br>
             <div class="full-width">
-                <input type="submit" value="Create" id="btn">
+                <input type="submit" value="Register Student" id="btn">
             </div>
-            
-        </main>
+          </main>
     </div>
 
     <script>
-        function resetForms() {
-            Array.from(document.forms).forEach( f => {
-                f.reset();
-            });
+        function validEmail(email, domain) {
+            if (email.split('@')[1] !== domain) return false;
+            else return true;
         }
-        const id = <%- JSON.stringify(bid) %>;
-        const oname = <%- JSON.stringify(oname) %>;
+
         const btn = document.getElementById('btn');
-        const form = document.getElementById('usr');
+        const form = document.getElementById('login');
         btn.addEventListener('click', async () => {
-            const inputs = Array.from(form.querySelectorAll('input'));//Array.from(form.children).filter((e,j) => j % 2 !== 0);
+            const inputs = Array.from(form.querySelectorAll('input'));
             const user = {};
             for (let i=0; i<inputs.length; i++) {
                 if (inputs[i].value === '') {
                     alert(`Field "${inputs[i].name}" should not be empty`);
                     return;
+                } else if (inputs[i].name === 'email' && !validEmail(inputs[i].value, 'utrgv.edu')) {
+                    alert('Email not valid.');
+                    return;
                 }
                 user[inputs[i].name] = inputs[i].value;
             }
-            const response = await fetch(`/api/${id}/users`, {
+            const response = await fetch('/auth/register', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -110,9 +106,7 @@
                 alert(data.message);
                 return;
             }
-            window.location.href = `/users/?bid=${id}&oname=${oname}`;
-            // reset form
-            //resetForms();
+            window.location.href = '/login';
         })
     </script>
 

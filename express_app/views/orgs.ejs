@@ -47,14 +47,7 @@
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/new">New Blockchain</a></li>
-                <!--<li><a href="/services">Services</a></li>
-                <li><a href="/contact">Contact</a></li> -->
-            </ul>
-        </nav>
+        <%- include('partials/navbar', { user: user }) %>
     </header>
 
     <div class="content-container">
@@ -69,6 +62,7 @@
     <!-- Your JavaScript scripts or external links go here -->
     <script>
         const id = <%- JSON.stringify(bid) %>;
+        const userObject = <%- JSON.stringify(user) %>;
 
         function download(file, text) {
             //creating an invisible element
@@ -104,10 +98,13 @@
                             headerCell.appendChild(headerText);
                             headerRow.appendChild(headerCell);
                         });
+                        const headerCell = document.createElement("th");
+                        const headerText = document.createTextNode('DOWNLOADS');
+                        headerCell.appendChild(headerText);
+                        headerRow.appendChild(headerCell);
                     }
                     const values = Object.values(item);
                     const dataRow = table.insertRow();
-                    console.log(values)
                     values.forEach(v => {
                         const dataCell = document.createElement("td");
                         if (Array.isArray(v)) {
@@ -137,6 +134,7 @@
                 });
                 const dataRows = table.querySelectorAll('tr:nth-child(n + 2)');
                 dataRows.forEach((row, i) => {
+                    if (userObject.role !== 'admin') return;
                     row.addEventListener('click', () => {
                         window.location.href = `/users?bid=${bid}&oname=${data[i].name}`;
                     })
@@ -148,10 +146,7 @@
         fetchDataAndRender(id);
     </script>
 
-    <footer>
-        <!-- Your footer content goes here -->
-        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
-    </footer>
+    <%- include('partials/footer') %>
 
 </body>
 </html>

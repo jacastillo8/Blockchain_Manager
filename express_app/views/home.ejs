@@ -38,20 +38,28 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        .full-width {
+            grid-column: 1 / 5; /* Span across all four columns */
+        }
+        button {
+            width: 90%; /* Full width of the grid */
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: #0f41e4ad;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+        #btn:disabled {
+            background-color: #666;
+        }
     </style>
 </head>
 <body>
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/new">New Blockchain</a></li>
-                <!--<li><a href="/services">Services</a></li>
-                <li><a href="/contact">Contact</a></li> -->
-            </ul>
-        </nav>
+        <%- include('partials/navbar', { user: user }) %>
     </header>
 
     <div class="content-container">
@@ -60,6 +68,13 @@
             <h2>Deployed Blockchains</h2>
             <br>
             <table id="dataTable"></table>
+            <div class="full-width">
+                <% if (user && user.role === 'admin') { %>
+                    <button type="button" id="btn">Create New Blockchain</button>
+                <% } else { %>
+                    <button type="button" id="btn" disabled>Create New Blockchain</button>
+                <% } %>
+            </div>
         </main>
     </div>
 
@@ -70,15 +85,14 @@
                 const response = await fetch('/api');
                 let data = await response.json();
                 data = data.map(i => {
-                    if (i.status) return { bid: i.id, owner: i.owner, status: 'active' }
-                    else return { bid: i.id, owner: i.owner, status: 'inactive' }
+                    if (i.status) return { "blockchain_id (bid)": i.id, owner: i.owner, status: 'active' }
+                    else return { "blockchain_id (bid)": i.id, owner: i.owner, status: 'inactive' }
                 });
-            
+                
                 var table = document.getElementById("dataTable");
                 table.innerHTML = '';
 
                 // Create table header
-                
                 const keys = Object.keys(data)
                 data.forEach((item, i) => {
                     if (i === 0) {
@@ -96,6 +110,8 @@
                     values.forEach(v => {
                         const dataCell = document.createElement("td");
                         const dataText = document.createTextNode(v);
+                        if (v === 'active') dataCell.style = "color:darkgreen"
+                        else if (v === 'inactive') dataCell.style = "color:darkred"
                         dataCell.appendChild(dataText);
                         dataRow.appendChild(dataCell);
                     });
@@ -104,8 +120,7 @@
                 dataRows.forEach((row, i) => {
                     row.addEventListener('click', () => {
                         // Handle row click event here
-                        window.location.href = `/blockchain?bid=${data[i].bid}`;
-                        //alert(`/blockchain/${data[i].bid}`); // Adjust index to account for header row
+                        window.location.href = `/blockchain?bid=${data[i]["blockchain_id (bid)"]}`;
                     });
                 });
 
@@ -113,12 +128,16 @@
                 console.error('Error fetching data:', error);
             }
         }
-        fetchDataAndRender();
+
+        const btn = document.getElementById('btn');
+        btn.addEventListener('click', async () => {
+            window.location.href = '/new';
+            // reset form
+            //resetForms();
+        })
+        if (<%-JSON.stringify(user)%>) fetchDataAndRender();
     </script>
 
-    <footer>
-        <!-- Your footer content goes here -->
-        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
-    </footer>
+    <%- include('partials/footer') %>
 </body>
 </html>

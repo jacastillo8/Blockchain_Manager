@@ -37,14 +37,20 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        input[type="submit"] {
-            width: 100%; /* Full width of the grid */
+        .full-width {
+            grid-column: 1 / 5; /* Span across all four columns */
+        }
+        button {
+            width: 90%; /* Full width of the grid */
             cursor: pointer;
             padding: 5px 10px;
             background-color: #0f41e4ad;
             color: #fff;
             border: none;
             border-radius: 4px;
+        }
+        #btn:disabled {
+            background-color: #666;
         }
     </style>
 </head>
@@ -53,14 +59,7 @@
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/new">New Blockchain</a></li>
-                <!--<li><a href="/services">Services</a></li>
-                <li><a href="/contact">Contact</a></li> -->
-            </ul>
-        </nav>
+        <%- include('partials/navbar', { user: user }) %>
     </header>
 
     <div class="content-container">
@@ -69,8 +68,12 @@
             <h2>Users for Organization: <%= oname%> <br>BID: <%= bid%></h2>
             <br>
             <table id="dataTable"></table>
-            <div>
-                <input type="submit" value="New User" id="btn_user">
+            <div class="full-width">
+                <% if (user && user.role === 'admin') { %>
+                    <button type="button" id="btn">New User</button>
+                <% } else { %>
+                    <button type="button" id="btn" disabled>New User</button>
+                <% } %>
             </div>
         </main>
     </div>
@@ -115,6 +118,10 @@
                             headerCell.appendChild(headerText);
                             headerRow.appendChild(headerCell);
                         });
+                        const headerCell = document.createElement("th");
+                        const headerText = document.createTextNode('DOWNLOADS');
+                        headerCell.appendChild(headerText);
+                        headerRow.appendChild(headerCell);
                     }
                     const values = Object.values(item);
                     const dataRow = table.insertRow();
@@ -143,16 +150,13 @@
             }
         }
         fetchDataAndRender(id, oname);
-        const btn = document.getElementById('btn_user');
+        const btn = document.getElementById('btn');
         btn.addEventListener('click', () => {
             window.location.href = `/newuser?bid=${id}&oname=${oname}`;
         })
     </script>
 
-    <footer>
-        <!-- Your footer content goes here -->
-        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
-    </footer>
+    <%- include('partials/footer') %>
 
 </body>
 </html>

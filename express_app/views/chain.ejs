@@ -40,7 +40,7 @@
         #remove {
             background-color: rgb(151, 6, 6);
         }
-        .btn:disabled {
+        .btn:disabled, #remove:disabled {
             background-color: #666;
         }
     </style>
@@ -50,14 +50,7 @@
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/new">New Blockchain</a></li>
-                <!--<li><a href="/services">Services</a></li>
-                <li><a href="/contact">Contact</a></li> -->
-            </ul>
-        </nav>
+        <%- include('partials/navbar', { user: user }) %>
     </header>
 
     <div class="content-container">
@@ -71,6 +64,7 @@
 
     <!-- Your JavaScript scripts or external links go here -->
     <script>
+        const userObject = <%- JSON.stringify(user) %>;
         const id = <%- JSON.stringify(bid) %>;
         async function fetchDataAndRender(bid) {
             try {
@@ -106,6 +100,11 @@
                 });
 
                 if (Object.keys(data).length !== 0) {
+                    const headerCell = document.createElement("th");
+                    const headerText = document.createTextNode('FUNCTIONS');
+                    headerCell.setAttribute('colspan', '3');
+                    headerCell.appendChild(headerText);
+                    headerRow.appendChild(headerCell);
                     // Create a button next to each row
                     const buttonBC = document.createElement("td");
                     const buttonA = document.createElement("button");
@@ -114,20 +113,20 @@
                     buttonBC.appendChild(buttonA);
                     dataRow.appendChild(buttonBC);
 
+                    const buttonRem = document.createElement("td");
+                    const buttonC = document.createElement("button");
+                    buttonC.innerHTML = "Remove Blockchain";
+                    buttonC.className = "btn";
+                    buttonC.id = "remove";
+                    buttonRem.appendChild(buttonC);
+                    dataRow.appendChild(buttonRem);
+                    
                     const buttonBen = document.createElement("td");
                     const buttonB = document.createElement("button");
                     buttonB.innerHTML = "Build Benchmark";
                     buttonB.className = "btn";
                     buttonBen.appendChild(buttonB);
                     dataRow.appendChild(buttonBen);
-
-                    const buttonRem = document.createElement("td");
-                    const buttonC = document.createElement("button");
-                    buttonC.innerHTML = "Remove";
-                    buttonC.className = "btn";
-                    buttonC.id = "remove";
-                    buttonRem.appendChild(buttonC);
-                    dataRow.appendChild(buttonRem);
 
                     const statusCell = document.getElementById('status');
                     const benchmarkCell = document.getElementById('benchmark');
@@ -159,11 +158,17 @@
                         // logic here
                         benchmarkCell.innerText = true;
                     });*/
-                    buttonC.addEventListener('click', async () => {
-                        const response = await fetch(`/api/${bid}`, { method: 'DELETE' });
-                        const result = await response.json();
-                        window.location.href = "/";
-                    });
+
+                    if (userObject.role != 'admin') {
+                        buttonC.disabled = true;
+                    }
+                    else {
+                        buttonC.addEventListener('click', async () => {
+                            const response = await fetch(`/api/${bid}`, { method: 'DELETE' });
+                            const result = await response.json();
+                            window.location.href = "/";
+                        });
+                    }
 
                     const dataCols = table.querySelectorAll('td'); 
                     dataCols.forEach((col, i) => {
@@ -182,10 +187,7 @@
         fetchDataAndRender(id);
     </script>
 
-    <footer>
-        <!-- Your footer content goes here -->
-        <p>&copy; <a href="https://github.com/jacastillo8/Blockchain_Manager">BCM</a>. All rights reserved.</p>
-    </footer>
+    <%- include('partials/footer') %>
 
 </body>
 </html>
