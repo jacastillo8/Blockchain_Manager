@@ -1,6 +1,7 @@
 /express_app/node_modules
 /express_app/scripts/build_compose/__pycache__
 /express_app/package-lock.json
+/express_app/server.log
 
 /blockchain_base/chains/*
 !/blockchain_base/.gitignore
