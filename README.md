@@ -37,18 +37,11 @@ This repository contains the source code to build and operate a Hyperledger Fabr
 # To run REST Service
 npm run mongoUp        # Generates MongoDB container to store blockchain structure information
 npm start              # Starts Blockchain service on Port 4000
-# Run Test Chain
-npm run chainUp        # Generates a chain with 2 organizations, 1 peer per org, 1 orderer, 
-                       # 1 channel (TestChannel) with 1 consortium of org1&2, and block
-                       # structure of 1s (timeout), 10 (max messages) and 2MB (max bytes).
-npm run contractUp     # Installs test_contract to TestChannel
-npm run caliperUp      # Generates a caliper instance
 # Remove all containers
 npm run clean
 ```
 ### Use postman collection to interact with service
-* Register a blockchain (`Register Blockchain`)
-* Build registered blockchain (`Build Blockchain`)
+* Create a new admin user to operate BCM (`Create Admin User`)
 * Insert new sample transaction to ledger (`Insert Transaction`)
 * Query submitted transaction from ledger (`Evaluate Transaction`)
 
