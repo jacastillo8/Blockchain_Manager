@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BCM</title>
-    <link rel="shortcut icon" href="#">
+    <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
         /* Centering styles */
@@ -67,7 +67,6 @@
             <!-- Your main content goes here -->
             <h2>Deployed Blockchains</h2>
             <br>
-            <table id="dataTable"></table>
             <div class="full-width">
                 <% if (user && user.role === 'admin') { %>
                     <button type="button" id="btn">Create New Blockchain</button>
@@ -75,6 +74,7 @@
                     <button type="button" id="btn" disabled>Create New Blockchain</button>
                 <% } %>
             </div>
+            <table id="dataTable"></table>
         </main>
     </div>
 
@@ -135,7 +135,8 @@
             // reset form
             //resetForms();
         })
-        if (<%-JSON.stringify(user)%>) fetchDataAndRender();
+        //if (<%-JSON.stringify(user)%>) 
+        fetchDataAndRender();
     </script>
 
     <%- include('partials/footer') %>

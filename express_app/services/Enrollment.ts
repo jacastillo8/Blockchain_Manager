@@ -6,6 +6,7 @@ import { Admin, Client } from "./utils/factories";
 import { FabricConfigurationProfile } from "./utils/interfaces";
 
 const { getCCP, getWallet, getMSP } = require('./utils/misc');
+const logger = require('./utils/logger');
 
 function getCA(organizationName: string, owner: string) {
     const ccp: FabricConfigurationProfile = getCCP(organizationName, owner);
@@ -56,8 +57,9 @@ export class Enrollment {
             };
     
             await wallet.put(user.enrollmentID, x509Identity);
-            console.log(`[+] Admin '${user.enrollmentID}' from ${user.org} has been successfully enrolled!`);
-        } else console.log(`[!] Admin '${user.enrollmentID}' from ${user.org} already enrolled.`);
+        } else {
+            logger.error(`function: Enrollment.admin    error: Admin '${user.enrollmentID}' from ${user.org} already enrolled`);
+        }
         return wallet.get(user.enrollmentID);
     }
 
@@ -90,14 +92,8 @@ export class Enrollment {
             };
     
             await wallet.put(user.enrollmentID, x509Identity);
-            console.log(`[+] Client '${user.enrollmentID}' from ${user.org} has been successfully enrolled!`);
-        } else console.log(`[!] Client '${user.enrollmentID}' from ${user.org} already enrolled.`)
+        } else {
+            logger.error(`function: Enrollment.client   error: Client '${user.enrollmentID}' from ${user.org} already enrolled`);
+        }
     }
 }
-
-
-
-
-
-/*module.exports.admin = admin;
-module.exports.client = client;*/

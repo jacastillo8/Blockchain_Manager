@@ -48,33 +48,22 @@ export function removeChainId(bid: string) {
 export function appendNewChainUser(client: Client, bid: string) {
     let filter = { 'id': bid, 'orgs.id': client.org };
     let request = { $addToSet: { 'orgs.$.users': client }}
-    Chain.updateOne(filter, request, function(err: any, doc: any) {
-        if (doc) console.log('[!] Database entry modified successfully');
-    });
+    Chain.updateOne(filter, request, function(err: any, doc: any) {});
 }
 
 export function appendNewChainContract(contract: any, bid: string) {
     let data = { name: contract.name, version: contract.version };
     let filter = { 'id': bid, 'channels.name': contract.channel };
     let request = { $addToSet: { 'channels.$.contracts': data }};
-    Chain.updateOne(filter, request, function(err: any, doc: any) {
-        if (doc) console.log('[!] Database entry modified successfully');
-    });
+    Chain.updateOne(filter, request, function(err: any, doc: any) {});
 }
 
 export function appendNewChannel(channel: any, bid: string) {
     let data = { name: channel.name, orgs: channel.orgs, contracts: channel.contracts };
     let filter = { 'id': bid };
     let request = { $addToSet: { 'channels': data }}
-    Chain.updateOne(filter, request, function(err: any, doc: any) {
-        if (doc) console.log('[!] Database entry modified successfully');
-    })
+    Chain.updateOne(filter, request, function(err: any, doc: any) {})
 }
-
-/*async function removeChainContract(contract, bid) {
-
-}*/
-
 export async function searchChainId(bid: string) {
     let document = null;
     let doc: any;

@@ -59,7 +59,6 @@ export function removeBCFiles(owner: string) {
     const filesPath = path.join(__dirname, '..', '..', '..', 'blockchain_base', 'chains', `bc_${owner}`)
     try {
         fs.rmSync(filesPath, { recursive: true, force: true });
-        console.log(`[-] Directory "bc_${owner}" removed.`)
         return true;
     } catch (err) {
         console.log(err);

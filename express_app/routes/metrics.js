@@ -1,9 +1,11 @@
 const express = require('express');
 const stats = require('simple-statistics');
 
+const logger = require('../services/utils/logger');
 const { Blockchain } = require('../services/Blockchain');
 const { storeChainId, updateChainId, appendNewChainUser, 
     generateChainId, searchChainId, appendNewChainContract } = require('../services/ChainModel');
+const { authenticateSession, isAdmin } = require('./auth');
 
 const Transaction = require('../models/transaction');
 
@@ -13,13 +15,18 @@ const router = express.Router();
 async function checkChainId(req, res, next) {
     let bid = req.params.bid;
     let { doc, error } = await searchChainId(bid);
-    if (error) res.status(500).json({ message: error.message });
-    else if (doc) {
+    if (error) {
+        logger.error(`function: checkChainId    status: 500 error: ${error.message}`);
+        res.status(500).json({ message: error.message });
+    } else if (doc) {
         res.locals.doc = doc;
         next();
         return
     }
-    else res.status(404).json({});
+    else {
+        logger.error("function: checkChainId    status: 404 error: Chain not found");
+        res.status(404).json({});
+    }
 }
 
 async function checkContractId(req, res, next) {
@@ -30,11 +37,12 @@ async function checkContractId(req, res, next) {
         next();
         return
     } 
-    res.status(404).json({ message: 'Contract not Found' });
+    logger.error("function: checkContractId status: 404 error: Contract not found");
+    res.status(404).json({ message: 'Contract not found' });
     return
 }
 
-router.all('/:bid*', checkChainId);
+router.all('/:bid*', checkChainId, authenticateSession, isAdmin);
 router.all('/:bid/:cid*', checkContractId);
 
 // TODO - Add methods to measure transaction delays
@@ -64,6 +72,7 @@ router.get('/:bid/:cid/:method', async function(req, res) {
         mean: stats.mean(delays),
         stDev: stats.standardDeviation(delays)
     }
+    logger.info(`GET    /metrics/:bid/:cid/:method  user: ${req.session.user.username}  bid: ${bid} cid: ${cid} method: ${method}`);
     res.json({ metrics, data: documents });
     return
 });

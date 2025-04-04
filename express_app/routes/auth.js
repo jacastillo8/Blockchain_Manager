@@ -1,9 +1,10 @@
 // auth.js
-
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user'); // Import the User model
 require('dotenv').config();  // Load environment variables
+
+const logger = require('../services/utils/logger');
 
 const router = express.Router();
 
@@ -12,7 +13,8 @@ const authenticateSession = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
-    return res.status(401).json({ message: 'Access Denied: Please log in to access this resource.' });
+    logger.error(`function: authenticateSession user: ${req.session.user.username}  role: ${req.session.user.role}  status: 401 error: Access Denied. Authenticate to access this resource`);
+    return res.status(401).json({ message: 'Please log in to access this resource' });
   }
 };
 
@@ -21,26 +23,29 @@ const isAdmin = (req, res, next) => {
   if (req.session.user && req.session.user.role === 'admin') {
     next();
   } else {
-    return res.status(403).json({ message: 'Access Denied: Admins Only' });
+    logger.error(`function: isAdmin user: ${req.session.user.username}  role: ${req.session.user.role}  status: 403 error: Access Denied. Administrators only`);
+    return res.status(403).json({ message: 'Administrators only' });
   }
 };
 
 // Admin Creation Route (only accessible with a setup key)
-router.post('/create-admin', async (req, res) => {
+router.post('/createAdmin', async (req, res) => {
     const { email, password } = req.body;
     const setupKey = req.header('Setup-Key'); // Setup key provided in the headers
     const storedSetupKey = process.env.SETUP_KEY; // The setup key stored in the .env file
   
     // Check if the provided setup key matches the stored setup key
     if (setupKey !== storedSetupKey) {
-      return res.status(403).json({ message: 'Access Denied: Invalid Setup Key' });
+      logger.error(`POST  /auth/createAdmin email: ${email} status: 403 error: Access Denied. Invalid setup key`);
+      return res.status(403).json({ message: 'Invalid setup key' });
     }
   
     try {
       // Check if the admin username already exists
       const userExists = await User.findOne({ username: email });
       if (userExists) {
-        return res.status(400).json({ message: 'Admin account with this username already exists.' });
+        logger.error(`POST  /auth/createAdmin email: ${email} status: 400 error: Admin account with this username already exists`);
+        return res.status(400).json({ message: 'Admin account with this username already exists' });
       }
   
       // Hash the password before storing it
@@ -50,15 +55,17 @@ router.post('/create-admin', async (req, res) => {
       // Create and store the new admin in MongoDB
       const newAdmin = new User({ username: email, passwordHash, role: 'admin' });
       await newAdmin.save();
-  
+      
+      logger.info(`POST   /auth/createAdmin email: ${email} status: 201`);
       res.status(201).json({});
     } catch (err) {
+      logger.error(`POST  /auth/createAdmin email: ${email} status: 500 error: ${err.message}`);
       res.status(500).json({ message: err.message });
     }
   });
 
 // Signup Route
-router.post('/register', async (req, res) => {
+/*router.post('/register', async (req, res) => {
   const { email, password } = req.body;  // Role can be passed in request
 
   try {
@@ -80,7 +87,7 @@ router.post('/register', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+});*/
 
 // Login Route using Sessions
 router.post('/login', async (req, res) => {
@@ -90,20 +97,24 @@ router.post('/login', async (req, res) => {
     // Find the user by username
     const user = await User.findOne({ username: email });
     if (!user) {
+      logger.error(`POST  /auth/login user: ${email}  status: 400 error: Username does not exists`);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
     // Check if the password is correct
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
+      logger.error(`POST  /auth/login user: ${email}  status: 400 error: Password (hash) does not match any records`);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
     // Set the user information in the session
     req.session.user = { username: user.username, role: user.role };
 
+    logger.info(`POST  /auth/login  user: ${email}  status: 200`);
     res.status(200).json({});
   } catch (err) {
+    logger.error(`POST  /auth/login user: ${email}  status: 500 error: ${err.message}`);
     res.status(500).json({ message: err.message });
   }
 });
@@ -112,22 +123,14 @@ router.post('/login', async (req, res) => {
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
+      logger.error(`GET   /auth/logout  user: ${req.session.user.username}  status: 500 error: ${err.message}`);
       return res.status(500).json({ message: 'Error logging out' });
     }
     res.clearCookie('connect.sid'); // Clear the session cookie
+    logger.info(`GET   /auth/logout  user: ${req.session.user.username}  status: 200`);
     return res.status(200).redirect('/');
   });
 });
-
-// Protected Route Example (for any authenticated user)
-/*router.get('/protected', authenticateSession, (req, res) => {
-  res.json({ message: `Welcome ${req.session.user.username}, you have successfully accessed a protected resource!` });
-});
-
-// Admin-Only Route
-router.get('/admin', authenticateSession, isAdmin, (req, res) => {
-  res.json({ message: `Welcome Admin ${req.session.user.username}, this is sensitive admin data.` });
-});*/
 
 module.exports = router;
 module.exports.authenticateSession = authenticateSession;

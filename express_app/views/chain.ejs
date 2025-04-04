@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BCM: Blockchain</title>
-    <link rel="shortcut icon" href="#">
+    <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
         .content-container {
@@ -46,7 +46,6 @@
     </style>
 </head>
 <body>
-
     <header>
         <!-- Your header content goes here -->
         <h1>Blockchain Manager</h1>
@@ -64,7 +63,7 @@
 
     <!-- Your JavaScript scripts or external links go here -->
     <script>
-        const userObject = <%- JSON.stringify(user) %>;
+        const userObject = <%- typeof user !== "undefined" ? JSON.stringify(user) : JSON.stringify("") %>;
         const id = <%- JSON.stringify(bid) %>;
         async function fetchDataAndRender(bid) {
             try {
@@ -139,9 +138,11 @@
                     buttonA.addEventListener('click', async () => {
                         // Handle button click event here
                         buttonA.disabled = true;
+                        buttonC.disabled = true;
                         const response = await fetch(`/api/${bid}/build`);
                         const result = await response.json();
                         statusCell.innerText = true;
+                        buttonC.disabled = false;
                     });
                     /*buttonB.addEventListener('click', async () => {
                         // Handle button click event here
@@ -159,11 +160,13 @@
                         benchmarkCell.innerText = true;
                     });*/
 
-                    if (userObject.role != 'admin') {
+                    if (userObject.role != 'admin' || userObject === "") {
+                        buttonA.disabled = true;
                         buttonC.disabled = true;
                     }
                     else {
                         buttonC.addEventListener('click', async () => {
+                            buttonC.disabled = true;
                             const response = await fetch(`/api/${bid}`, { method: 'DELETE' });
                             const result = await response.json();
                             window.location.href = "/";

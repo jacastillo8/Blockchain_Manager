@@ -3,6 +3,7 @@
 import { Enrollment } from "./Enrollment";
 import { Admin, Client, Contract, Organization } from "./utils/factories";
 import { BlockStructure, Channel, Endpoint, Message } from "./utils/interfaces";
+const logger = require("./utils/logger");
 
 const { shell, containsObject, isDuplicate, prepareEndpoint, wait,
         isUsernameExists, removeBCFiles } = require('./utils/misc');
@@ -146,11 +147,9 @@ export class Blockchain {
                 });
                 let blockParams = `--block ${this._block.timeout} ${this._block.batch_size.max_messages} ${this._block.batch_size.max_bytes}`;
                 let args = `-O ${orgs} -p ${peers} -u 1 -o ${Number(this._orderers) - 1} -d ${this._owner.toLowerCase()} -n ${this._owner.toLowerCase()} -C ${channelNames.join(' ')} -c ${consortiums.join(' ')} ${blockParams} --folder bc_${this._owner.toLowerCase()}`;
-                console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+                logger.info(`function: Blockchain.build     command:    ${python} ${scriptPath} ${args}`);
                 let result = await shell(`${python} ${scriptPath} ${args}`);
-                console.log('[+] Network generated');
                 if (result.code === 0) {
-                    console.log('[+] Enrolling users...');
                     //let user = new Client('benchmark_user', this._organizations[0].name, 'Benchmark');
                     //this._users.push(user);
                     this._users.forEach(function(this: Blockchain, user: Client) {
@@ -164,7 +163,6 @@ export class Blockchain {
                             let index = containsObject(contract, this._contracts);
                             if (index > -1) {
                                 this._contracts.splice(index, 1);
-                                console.log('[!] Contract not found');
                             }
                         }
                     }
@@ -173,9 +171,7 @@ export class Blockchain {
                 } else {
                     throw Error(JSON.stringify(result.stderr));
                 }
-            } else {
-                console.log('[!] Blockchain created already');
-            }
+            } 
             return this.info
         } catch (err: any) {
             throw new Error(err.message);
@@ -185,28 +181,18 @@ export class Blockchain {
 
     // TODO - create method to generate channels ()
 
-    // Future: need to remove only containers related to specific domain
-    /*async destroy() {
-        console.log(`[+] Executing: bash ./scripts/clean.sh`);
-        let result = await shell('bash ./scripts/clean.sh');
-        if (result.code === 0) {
-            this._built = false;
-        }
-        return result;
-    }*/
    async clean() {
         try {
             let python = await getPythonEnv();
             let scriptPath = 'scripts/remove_fabric.py';
             let args = `-t ${this._owner}`;
-            console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+            logger.info(`function: Blockchain.clean     command:    ${python} ${scriptPath} ${args}`);
             let result = await shell(`${python} ${scriptPath} ${args}`);
-            if (result.code === 1) throw new Error(`[!] Unable to remove containers: ${result.stderr}`);
-            console.log(`[-] Target containers removed: ${this._owner}`);
-            if (!removeBCFiles(this._owner)) throw new Error("[!] Unable to remove blockchain files");
+            if (result.code === 1) throw new Error(`Unable to remove containers: ${result.stderr}`);
+            if (!removeBCFiles(this._owner)) throw new Error("Unable to remove blockchain files");
             return true;
         } catch (err: any) {
-            console.log(err.message);
+            logger.error(`function: Blockchain.clean    error: ${err.message}`);
             return false;
         }
    }
@@ -226,7 +212,7 @@ export class Blockchain {
                     let adminIdentity = await enroll.admin(new Admin('admin', client.org, 'adminpw'), this._owner);
                     await enroll.client(client, adminIdentity, this._owner);
                 } catch (error) {
-                    console.log(`[!] Failed to enroll user:\n${error}`);
+                    logger.error(`function: Blockchain.enroll   error: ${error}`);
                 }
             }
         }
@@ -258,40 +244,22 @@ export class Blockchain {
             let result: any;
             if (contract.belongsTo === "All") {
                 let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + version[0]} -v ${version} --folder bc_${this._owner}`;
-                console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+                logger.info(`function: Blockchain.installContract     command:    ${python} ${scriptPath} ${args}`);
                 result = await shell(`${python} ${scriptPath} ${args}`);
             } else {
                 let orgID = this._organizations.filter(entry => entry.name === belongsTo)[0].id;
                 let args = `-O ${orgs} -p ${peers} -C ${channel} -c ${consortiums[index]} -d ${this._owner.toLowerCase()} -n ${name + orgID.slice(-1)} -v ${version} -o ${orgID.slice(-1)} --folder bc_${this._owner}`;
-                console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+                logger.info(`function: Blockchain.installContract     command:    ${python} ${scriptPath} ${args}`);
                 result = await shell(`${python} ${scriptPath} ${args}`);
             }
-            //console.log(result)
             if (result.code === 0) cid = contract.id;
             // Check response code - changes from 0 to 1
             else throw new Error(`Exception caused by: ${result.stderr}`);
         }
         if (!containsObject(contract, this._contracts)) this._contracts.push(contract);
         // Wait for CC instantiation to complete
-        console.log('[!] Contract instantiation complete');
         return { cid };
     }
-
-    // Future - removing containers is a hassle
-    /*async removeContract(contract) {
-        console.log('[+] Removing contract...');
-        let result = containsObject(contract, this._contracts);
-        if (result) {
-            let response = await shell(`python ./scripts/removeCC.py -n ${contract.name} -v ${contract.version} -d ${this._owner.toLowerCase()}`);
-            if (response.code === 0) {
-                this._contracts.splice(parseInt(result), 1);
-                return true;
-            }
-            else console.log(`Exception found: ${response.stderr}`);
-        }
-        console.log('Contract not found')
-        return false;
-    }*/
 
     async buildCaliper(channel: string) {
         let python = await getPythonEnv()
@@ -314,15 +282,12 @@ export class Blockchain {
         let scriptPath = 'scripts/build_caliper.py';
         let args = `-O ${orgs} -p ${peers} -C ${channel} ${index + 1} -c ${consortiums[index]} -o ${this._orderers} -d ${this._owner.toLowerCase()}`;
         args += ` --contracts ${contracts}`;
-        console.log(`[+] Executing: ${python} ${scriptPath} ${args}`);
+        logger.info(`function: Blockchain.buildCaliper     command:    ${python} ${scriptPath} ${args}`);
         let result = await shell(`${python} ${scriptPath} ${args}`);
-        if (result.code === 0) {
-            console.log('[+] Hyperledger Caliper is Up');
-        } else throw Error(`Caliper Instantiation Failed with Error: ${result.stderr}`);
+        if (result.code !== 0) throw Error(`Caliper Instantiation Failed with Error: ${result.stderr}`);
     }
 
     async evaluate(message: Message, endpoint: Endpoint, json=false) {
-        console.log('[+] Evaluating transaction...');
         const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
         let buffer = await contract.evaluateTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
         await gateway.disconnect();
@@ -332,7 +297,6 @@ export class Blockchain {
 
     async submit(message: Message, endpoint: Endpoint, json=false) {
         try {
-            console.log('[+] Submiting transaction...');
             const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
             let buffer = await contract.submitTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
             await gateway.disconnect();

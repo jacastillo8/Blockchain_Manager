@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BCM: Users</title>
-    <link rel="shortcut icon" href="#">
+    <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
         .content-container {
@@ -67,7 +67,6 @@
             <!-- Your main content goes here -->
             <h2>Users for Organization: <%= oname%> <br>BID: <%= bid%></h2>
             <br>
-            <table id="dataTable"></table>
             <div class="full-width">
                 <% if (user && user.role === 'admin') { %>
                     <button type="button" id="btn">New User</button>
@@ -75,6 +74,7 @@
                     <button type="button" id="btn" disabled>New User</button>
                 <% } %>
             </div>
+            <table id="dataTable"></table>
         </main>
     </div>
 

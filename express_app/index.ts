@@ -6,6 +6,8 @@ const path = require('path');
 const mongoose = require('mongoose');
 const cons = require('consolidate');
 
+const logger = require('./services/utils/logger');
+
 // Deprecation Warnings removed
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
@@ -17,16 +19,16 @@ let db = mongoose.connection;
 
 // Check DB connection
 db.once('open', function(){
-    console.log('Connected to MongoDB');
+    logger.info("BCM connected to DB");
 });
 
 // Check for DB errors
 db.on('error', function(err: any){
-    console.log(err);
+    logger.error(err);
 });
 
 db.on('disconnected', function() {
-    console.log('MongoDB Disconnected');
+    logger.error('BCM disconnected from DB');
 })
 
 const app = express();
@@ -72,5 +74,5 @@ app.use('/auth', auth);
 
 let port = process.env.PORT;
 app.listen(port, function() {
-    console.log(`Serving on port ${port}...`);
+    logger.info(`BCM is serving on port ${port}`);
 });

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BCM: Orgs</title>
-    <link rel="shortcut icon" href="#">
+    <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
         .content-container {
@@ -62,7 +62,7 @@
     <!-- Your JavaScript scripts or external links go here -->
     <script>
         const id = <%- JSON.stringify(bid) %>;
-        const userObject = <%- JSON.stringify(user) %>;
+        const userObject = <%- typeof user !== "undefined" ? JSON.stringify(user) : JSON.stringify("") %>;
 
         function download(file, text) {
             //creating an invisible element
@@ -131,10 +131,11 @@
                         const result = await response.json();
                         download(`ccp_${data[i].id}.json`, JSON.stringify(result));
                     });
+                    if (userObject.role !== 'admin' || userObject === "") btn.disabled = true;
                 });
                 const dataRows = table.querySelectorAll('tr:nth-child(n + 2)');
                 dataRows.forEach((row, i) => {
-                    if (userObject.role !== 'admin') return;
+                    if (userObject.role !== 'admin' || userObject === "") return;
                     row.addEventListener('click', () => {
                         window.location.href = `/users?bid=${bid}&oname=${data[i].name}`;
                     })
