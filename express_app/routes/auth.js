@@ -121,13 +121,14 @@ router.post('/login', async (req, res) => {
 
 // Logout Route (destroy session)
 router.get('/logout', (req, res) => {
+  const currentUser = req.session.user.username
   req.session.destroy(err => {
     if (err) {
-      logger.error(`GET   /auth/logout  user: ${req.session.user.username}  status: 500 error: ${err.message}`);
+      logger.error(`GET   /auth/logout  user: ${currentUser}  status: 500 error: ${err.message}`);
       return res.status(500).json({ message: 'Error logging out' });
     }
     res.clearCookie('connect.sid'); // Clear the session cookie
-    logger.info(`GET   /auth/logout  user: ${req.session.user.username}  status: 200`);
+    logger.info(`GET   /auth/logout  user: ${currentUser}  status: 200`);
     return res.status(200).redirect('/');
   });
 });
