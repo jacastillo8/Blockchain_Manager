@@ -6,6 +6,9 @@ body, h1, h2, p, ul, li {
 
 /* Body styles */
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     font-family: Arial, sans-serif;
     background-color: #f8f8f8;
     color: #333;
@@ -14,9 +17,19 @@ body {
 
 /* Header styles */
 header {
-    background-color: #333;
+    background-color: #1f2937;
     color: #fff;
     padding: 20px;
+    text-align: center; /* Center the text within the header */
+}
+
+/* Footer styles */
+footer {
+    margin-top: auto;
+    background-color: #1f2937;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
 }
 
 header h1 {
@@ -37,10 +50,12 @@ nav ul li a {
     color: #fff;
     text-decoration: none;
     font-size: 18px;
+    padding: 10px;
 }
 
 nav ul li a:hover {
-    text-decoration: underline;
+    background-color: #374151;
+    text-decoration: none;
 }
 
 /* Main styles */
@@ -48,10 +63,28 @@ main {
     padding: 20px;
 }
 
-/* Footer styles */
-footer {
-    background-color: #333;
-    color: #fff;
-    padding: 10px;
+.content-container {
     text-align: center;
+    margin: 2% auto; /* Center horizontally */
+    padding: 0 20px; /* Add some padding */
+    width: 110vh; /* Set the fixed height */
+    overflow-y: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px auto; /* Center the table */
+    table-layout: fixed;
+}
+
+tr:hover {
+    background-color: #f2f2f2; /* Highlight the row on hover */
+}
+
+th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.65vw;
 }

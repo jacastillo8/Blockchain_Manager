@@ -7,27 +7,8 @@
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
-        }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px auto; /* Center the table */
-        }
-        tr:hover {
-            background-color: #f2f2f2; /* Highlight the row on hover */
-        }
-        th, td {
-            border: 1px solid #dddddd;
-            padding: 8px;
-            text-align: center;
+        .title-container {
+            height: 60px;
         }
     </style>
 </head>
@@ -42,8 +23,9 @@
     <div class="content-container">
         <main>
             <!-- Your main content goes here -->
-            <h2>Block Structure for BID: <%= bid%></h2>
-            <br>
+            <div class="title-container">
+                <h2><strong>Block Structure</strong></h2>
+            </div>
             <table id="dataTable"></table>
         </main>
     </div>

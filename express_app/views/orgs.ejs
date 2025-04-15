@@ -3,32 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCM: Orgs</title>
+    <title>BCM: Organizations</title>
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
-        }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px auto; /* Center the table */
-        }
-        tr:hover {
-            background-color: #f2f2f2; /* Highlight the row on hover */
-        }
-        th, td {
-            border: 1px solid #dddddd;
-            padding: 8px;
-            text-align: center;
-        }
         .btn {
             padding: 5px 10px;
             background-color: #003603ad;
@@ -39,6 +17,9 @@
         }
         .btn:disabled {
             background-color: #666;
+        }
+        .title-container {
+            height: 60px;
         }
     </style>
 </head>
@@ -53,8 +34,9 @@
     <div class="content-container">
         <main>
             <!-- Your main content goes here -->
-            <h2>Organizations for BID: <%= bid%></h2>
-            <br>
+            <div class="title-container">
+                <h2><strong>Organizations</strong></h2>
+            </div>
             <table id="dataTable"></table>
         </main>
     </div>
@@ -93,7 +75,9 @@
                         const headerRow = table.insertRow();
                         keys.forEach(k => {
                             const headerCell = document.createElement("th");
-                            if (k === "id") k = "oid";
+                            if (k === "id") k = "Organization_ID (oid)";
+                            else if (k === "users") k = "Enrolled_Users";
+                            else if (k === "peers") k = "Deployed_Peers";
                             const headerText = document.createTextNode(k.toUpperCase());
                             headerCell.appendChild(headerText);
                             headerRow.appendChild(headerCell);

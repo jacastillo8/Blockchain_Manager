@@ -3,31 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCM: Channel</title>
+    <title>BCM: Channels</title>
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
+        .title-container {
+            height: 80px;
         }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px auto; /* Center the table */
-        }
-        tr:hover {
-            background-color: #f2f2f2; /* Highlight the row on hover */
-        }
-        th, td {
-            border: 1px solid #dddddd;
-            padding: 8px;
-            text-align: center;
+        input {
+            margin-bottom: 10px; 
+            padding: 5px;
+            width: 88%;
         }
     </style>
 </head>
@@ -42,8 +28,10 @@
     <div class="content-container">
         <main>
             <!-- Your main content goes here -->
-            <h2>Channels for BID: <%= bid%></h2>
-            <br>
+            <div class="title-container">
+                <h2><strong>Channels</strong></h2>
+            </div>
+            <input type="text" id="searchInput" placeholder="Search by channel name...">
             <table id="dataTable"></table>
         </main>
     </div>
@@ -67,6 +55,8 @@
                         const headerRow = table.insertRow();
                         keys.forEach(k => {
                             const headerCell = document.createElement("th");
+                            if (k === "orgs") k = "Enrolled_Organizations";
+                            else if (k === "contracts") k = "Deployed_Contracts";
                             const headerText = document.createTextNode(k.toUpperCase());
                             headerCell.appendChild(headerText);
                             headerRow.appendChild(headerCell);
@@ -96,6 +86,21 @@
                 console.error('Error fetching data:', error);
             }
         }
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#dataTable tr');
+
+            rows.forEach((row, index) => {
+                if (index === 0) return; // Skip header row
+                const cells = row.getElementsByTagName('td');
+                const name = cells[0]?.textContent?.toLowerCase() || ''; // Adjust index if needed
+                if (name.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
         fetchDataAndRender(id);
     </script>
 

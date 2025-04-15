@@ -3,44 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCM</title>
+    <title>BCM: Home</title>
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        /* Centering styles */
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
-        }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px auto; /* Center the table */
-        }
-        tr:hover {
-            background-color: #f2f2f2; /* Highlight the row on hover */
-        }
-        th, td {
-            border: 1px solid #dddddd;
-            padding: 8px;
-            text-align: center;
-        }
-        .btn {
-            padding: 5px 10px;
-            background-color: #0f41e4ad;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .full-width {
-            grid-column: 1 / 5; /* Span across all four columns */
-        }
         button {
             width: 90%; /* Full width of the grid */
             cursor: pointer;
@@ -50,8 +16,16 @@
             border: none;
             border-radius: 4px;
         }
+        input {
+            margin-bottom: 10px; 
+            padding: 5px;
+            width: 88%;
+        }
         #btn:disabled {
             background-color: #666;
+        }
+        .title-container > h2 {
+            height: 80px;
         }
     </style>
 </head>
@@ -65,15 +39,15 @@
     <div class="content-container">
         <main>
             <!-- Your main content goes here -->
-            <h2>Deployed Blockchains</h2>
-            <br>
-            <div class="full-width">
-                <% if (user && user.role === 'admin') { %>
-                    <button type="button" id="btn">Create New Blockchain</button>
-                <% } else { %>
-                    <button type="button" id="btn" disabled>Create New Blockchain</button>
-                <% } %>
+            <div class="title-container">
+                <h2><strong>Deployed Blockchains</strong></h2>
             </div>
+            <input type="text" id="searchInput" placeholder="Search by blockchain owner...">
+            <% if (user && user.role === 'admin') { %>
+                <button type="button" id="btn">Create New Blockchain</button>
+            <% } else { %>
+                <button type="button" id="btn" disabled>Create New Blockchain</button>
+            <% } %>
             <table id="dataTable"></table>
         </main>
     </div>
@@ -132,10 +106,22 @@
         const btn = document.getElementById('btn');
         btn.addEventListener('click', async () => {
             window.location.href = '/new';
-            // reset form
-            //resetForms();
         })
-        //if (<%-JSON.stringify(user)%>) 
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#dataTable tr');
+
+            rows.forEach((row, index) => {
+                if (index === 0) return; // Skip header row
+                const cells = row.getElementsByTagName('td');
+                const owner = cells[1]?.textContent?.toLowerCase() || ''; // Adjust index if needed
+                if (owner.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
         fetchDataAndRender();
     </script>
 

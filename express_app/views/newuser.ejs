@@ -3,23 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCM</title>
+    <title>BCM: New User</title>
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        /* Centering styles */
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
-        }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        #bcform {
-            text-align: left;
-        }
         .form-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr); /* Four columns in total */
@@ -29,14 +16,14 @@
         }
         label {
             grid-column: span 1; /* Each label occupies one column */
+            text-align: right;
         }
-        input, select {
+        input {
+            margin-bottom: 10px; 
+            padding: 5px;
             grid-column: span 1; /* Each input field occupies one column */
         }
-        .full-width {
-            grid-column: 1 / 5; /* Span across all four columns */
-        }
-        input[type="submit"] {
+        button {
             width: 90%; /* Full width of the grid */
             cursor: pointer;
             padding: 5px 10px;
@@ -44,6 +31,9 @@
             color: #fff;
             border: none;
             border-radius: 4px;
+        }
+        .title-container {
+            height: 80px;
         }
     </style>
 </head>
@@ -57,22 +47,21 @@
     <div class="content-container">
         <main>
             <!-- Your main content goes here -->
-            <h2>New User Form</h2>
-            <br>
+            <div class="title-container">
+                <h2><strong>New Blockchain User Form</strong></h2>
+            </div>
             <form id="usr" class="form-grid">
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name">
 
                 <label for="org">Organization:</label>
-                <input type="text" id="org" name="org" value=<%=oname%> disabled>
+                <input type="text" id="org" name="org" value=<%=oname%> readonly>
 
                 <label for="department">Department:</label>
                 <input type="text" id="department" name="department" style="grid-column: span 3;">
             </form>
             <br>
-            <div class="full-width">
-                <input type="submit" value="Create" id="btn">
-            </div>
+            <button type="button" id="btn">Create</button>
             
         </main>
     </div>
@@ -88,7 +77,7 @@
         const btn = document.getElementById('btn');
         const form = document.getElementById('usr');
         btn.addEventListener('click', async () => {
-            const inputs = Array.from(form.querySelectorAll('input'));//Array.from(form.children).filter((e,j) => j % 2 !== 0);
+            const inputs = Array.from(form.querySelectorAll('input'));
             const user = {};
             for (let i=0; i<inputs.length; i++) {
                 if (inputs[i].value === '') {
@@ -112,8 +101,6 @@
                 return;
             }
             window.location.href = `/users/?bid=${id}&oname=${oname}`;
-            // reset form
-            //resetForms();
         })
     </script>
 

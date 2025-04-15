@@ -3,40 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCM</title>
+    <title>BCM: Login</title>
     <link rel="shortcut icon" href="data:image/x-icon;,"type="image/x-icon">
     <link rel="stylesheet" href="/styles.css" type="text/css"> <!-- Link to your CSS file -->
     <style>
-        /* Centering styles */
-        .content-container {
-            text-align: center;
-            margin: 0 auto; /* Center horizontally */
-            max-width: 1000px; /* Limit content width */
-            padding: 0 20px; /* Add some padding */
-        }
-        header {
-            text-align: center; /* Center the text within the header */
-        }
-        #bcform {
-            text-align: left;
-        }
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Four columns in total */
+            grid-template-columns: repeat(2, 1fr); /* Four columns in total */
             gap: 10px; /* Spacing between grid items */
-            max-width: 800px;
+            max-width: 500px;
             margin: auto;
         }
         label {
-            grid-column: span 1; /* Each label occupies one column */
+            grid-column: span 2; /* Each label occupies one column */
+            text-align: left;
         }
-        input, select {
-            grid-column: span 1; /* Each input field occupies one column */
+        input {
+            margin-bottom: 10px; 
+            padding: 5px;
+            grid-column: span 2; /* Each input field occupies one column */
         }
-        .full-width {
-            grid-column: 1 / 5; /* Span across all four columns */
-        }
-        input[type="submit"] {
+        button {
             width: 90%; /* Full width of the grid */
             cursor: pointer;
             padding: 5px 10px;
@@ -44,6 +31,9 @@
             color: #fff;
             border: none;
             border-radius: 4px;
+        }
+        .title-container {
+            height: 70px;
         }
     </style>
 </head>
@@ -56,8 +46,10 @@
 
     <div class="content-container">
         <main>
-            <h1>Login</h1>
-            <form id="login" action="/auth/login" method="POST">
+            <div class="title-container">
+                <h2><strong>Login Form</strong></h2>
+            </div>
+            <form id="login" class="form-grid" action="/auth/login" method="POST">
               <label for="email">Email:</label>
               <input type="email" name="email" id="email" required>
         
@@ -66,9 +58,7 @@
 
             </form>
             <br>
-            <div class="full-width">
-                <input type="submit" value="Login" id="btn">
-            </div>
+            <button type="button" id="btn">Login</button>
           </main>
     </div>
 
@@ -76,7 +66,7 @@
         const btn = document.getElementById('btn');
         const form = document.getElementById('login');
         btn.addEventListener('click', async () => {
-            const inputs = Array.from(form.querySelectorAll('input'));//Array.from(form.children).filter((e,j) => j % 2 !== 0);
+            const inputs = Array.from(form.querySelectorAll('input'));
             const user = {};
             for (let i=0; i<inputs.length; i++) {
                 if (inputs[i].value === '') {
