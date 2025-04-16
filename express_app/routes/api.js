@@ -87,9 +87,14 @@ function prepareEndpoint(req, res, next) {
     let doc = res.locals.doc;
     let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
     let contract = bc.contract(req.params.cid);
-    if (contract.length !== 0) {
+    if (Object.keys(contract).length !== 0) {
         let users = bc.users();
         let affiliation = getAffiliation(req.body.requestor, users);
+        if (affiliation === null) {
+            logger.error(`function: prepareEndpoint client: ${req.body.requestor} bid: ${doc.id}  cid: ${req.params.cid}  status: 400 error: Requestor not found`);
+            res.status(400).json({ message: 'Requestor not found' });
+            return;
+        }
         res.locals.endpoint = { 
             requestor: req.body.requestor,
             affiliation,
@@ -185,7 +190,7 @@ router.get('/:bid/build', authenticateSession, isAdmin, async function(req, res)
         let doc = res.locals.doc;
         if (!doc.status) {
             let bc = new Blockchain(doc.orderers, doc.orgs, doc.owner, doc.channels, doc.status, doc.block, doc.benchmark);
-            let info = await bc.build(setListeners=true);
+            let info = await bc.build();
             if (info.status) {
                 updateChainId(doc.id, bc.contracts);
                 // TODO - create listeners
@@ -475,7 +480,7 @@ router.post('/:bid/:cid/insert', prepareEndpoint, async function(req, res) {
         });
         newTX.save();
         logger.info(`POST   /api/:bid/:cid/insert   client: ${req.body.requestor}   bid: ${doc.id}  cid: ${req.params.cid}  status: 201`);
-        res.status(201).json({ result });
+        res.status(201).json(result);
     } catch (err) {
         let newTX = new Transaction({
             bid: req.params.bid,
@@ -513,7 +518,7 @@ router.post('/:bid/:cid/evaluate', prepareEndpoint, async function(req, res) {
         });
         newTX.save();
         logger.info(`POST   /api/:bid/:cid/evaluate client: ${req.body.requestor}   bid: ${doc.id}  cid: ${req.params.cid}  status: 200`);
-        res.json({ result });
+        res.json(result);
     } catch (err) {
         let newTX = new Transaction({
             bid: req.params.bid,

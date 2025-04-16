@@ -130,7 +130,7 @@ export class Blockchain {
         }
     }
 
-    async build(setListeners=false) {
+    async build() {
         try {
             if (!this._built) {
                 let python = await getPythonEnv();
@@ -252,9 +252,9 @@ export class Blockchain {
                 logger.info(`function: Blockchain.installContract     command:    ${python} ${scriptPath} ${args}`);
                 result = await shell(`${python} ${scriptPath} ${args}`);
             }
-            if (result.code === 0) cid = contract.id;
+            if (result.stdout === "") cid = contract.id;
             // Check response code - changes from 0 to 1
-            else throw new Error(`Exception caused by: ${result.stderr}`);
+            else throw Error('Chaincode not deployed due to errors. See docker logs <peer> for more details');
         }
         if (!containsObject(contract, this._contracts)) this._contracts.push(contract);
         // Wait for CC instantiation to complete
@@ -288,11 +288,16 @@ export class Blockchain {
     }
 
     async evaluate(message: Message, endpoint: Endpoint, json=false) {
-        const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
-        let buffer = await contract.evaluateTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
-        await gateway.disconnect();
-        if (json) return JSON.parse(buffer.toString());
-        else return buffer;
+        try {
+            const { contract, gateway } = await prepareEndpoint(endpoint, this._owner);
+            let buffer = await contract.evaluateTransaction(message.method, JSON.stringify(message.args), JSON.stringify(message.data));
+            await gateway.disconnect();
+            if (json) return JSON.parse(buffer.toString());
+            else return buffer;
+        } catch (err: any) {
+            throw Error(err.message);
+        }
+
     }
 
     async submit(message: Message, endpoint: Endpoint, json=false) {

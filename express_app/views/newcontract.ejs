@@ -101,8 +101,6 @@
             let data = await response.json();
             if (data.message !== undefined) {
                 alert(data.message);
-                resetForms();
-                return;
             }
             window.location.href = `/contracts/?bid=${id}&chid=${chid}`;
         })
